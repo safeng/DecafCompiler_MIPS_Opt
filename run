@@ -34,7 +34,7 @@ fi
 
 echo "-- spim -file tmp.asm"
 echo " "
-$SPIM -file tmp.asm
+$SPIM -keepstats -file tmp.asm
 
 echo " "
 echo " "

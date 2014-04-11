@@ -86,6 +86,8 @@ class Mips {
 
     void EmitPreamble();
 
+    void SaveCaller(Location *location);
+    void RestoreCaller(Location *location);
 };
 
 
