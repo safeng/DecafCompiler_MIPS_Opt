@@ -1,0 +1,16 @@
+## Vim
+[._]*.s[a-w][a-z]
+[._]s[a-w][a-z]
+*.un~
+*~
+
+## C
+*.o
+
+## DCC
+lex.yy.c
+dpp.yy.c
+y.tab.c
+y.tab.h
+y.output
+dcc
