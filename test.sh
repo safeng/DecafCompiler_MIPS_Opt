@@ -9,7 +9,7 @@ then
     for SRC in samples/*.decaf
     do
         BASE=${SRC%.decaf}
-        ./dcc < ${SRC} > ${BASE}.s 2> /dev/null
+        solution/dcc < ${SRC} > ${BASE}.s 2> /dev/null
         if ./dcc < ${SRC} &> ${BASE}.test.s;
         then
             if [ -e ${BASE}.in ];
@@ -25,8 +25,8 @@ then
         fi
         if diff -urw ${BASE}.test ${BASE}.out &> /dev/null
         then
-            SIZE_SOL=$(wc -c ${BASE}.s | cut -d' ' -f1)
             SIZE_TEST=$(wc -c ${BASE}.test.s | cut -d' ' -f1)
+            SIZE_SOL=$(wc -c ${BASE}.s | cut -d' ' -f1)
             if [ $SIZE_TEST -gt $SIZE_SOL ]
             then
                 echo -e "\e[33m${BASE}.decaf\e[0m"
@@ -38,7 +38,7 @@ then
             diff -urw ${BASE}.test ${BASE}.out
         fi
     done
-    rm samples/*.test.s samples/*.test samples/*.out
+    rm samples/*.s samples/*.test samples/*.out
 else
     echo -e "\e[31mBuild failed\e[0m"
 fi
