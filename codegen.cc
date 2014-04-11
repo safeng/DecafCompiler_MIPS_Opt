@@ -21,24 +21,26 @@ void CodeGenerator::MarkParent()
     delete[] parent;
     parent = new std::unordered_set<int>[len]();
     PopulateLabelTable();
-    for (int i = 0; i < len - 2; i++) {
-        Instruction *line = code->Nth(i);
+    for (int i = 1; i < len; i++) {
+        Instruction *line = code->Nth(i - 1);
         if (in_fun) {
             if (line->IsEndFunc()) {
                 in_fun = false;
             } else if (line->IsGoto()) {
                 Goto *g = static_cast<Goto*>(line);
                 const char *lbl = g->GetLabel();
-                parent[labelTable->Lookup(lbl)].insert(i);
+                parent[labelTable->Lookup(lbl)].insert(i - 1);
             } else if (line->IsIfz()) {
                 IfZ *g = static_cast<IfZ*>(line);
                 const char *lbl = g->GetLabel();
-                parent[labelTable->Lookup(lbl)].insert(i);
-                parent[i + 1].insert(i);
+                parent[labelTable->Lookup(lbl)].insert(i - 1);
+                parent[i].insert(i - 1);
+            } else {
+                parent[i].insert(i - 1);
             }
         } else if (line->IsBeginFunc()) {
             in_fun = true;
-            parent[i + 1].insert(i);
+            parent[i].insert(i - 1);
         }
     }
 }
