@@ -20,6 +20,7 @@ void CodeGenerator::MarkParent()
     bool in_fun = false;
     delete[] parent;
     parent = new std::unordered_set<int>[len]();
+    PopulateLabelTable();
     for (int i = 0; i < len - 2; i++) {
         Instruction *line = code->Nth(i);
         if (in_fun) {
@@ -40,6 +41,11 @@ void CodeGenerator::MarkParent()
             parent[i + 1].insert(i);
         }
     }
+}
+
+void CodeGenerator::Optimise()
+{
+    MarkParent();
 }
 
 CodeGenerator::CodeGenerator() :
@@ -275,6 +281,7 @@ void CodeGenerator::GenVTable(const char *className, List<const char *> *methodL
 
 void CodeGenerator::DoFinalCodeGen()
 {
+    Optimise();
     if (IsDebugOn("tac")) { // if debug don't translate to mips, just print Tac
         for (int i = 0; i < code->NumElements(); i++)
             code->Nth(i)->Print();

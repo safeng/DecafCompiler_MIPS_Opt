@@ -30,10 +30,9 @@ class CodeGenerator {
     BeginFunc *insideFn;
     Hashtable<int> *labelTable; 
 
-  private:
     void PopulateLabelTable(); 
-
     void MarkParent();
+    void Optimise();
 
   public:
            // Here are some class constants to remind you of the offsets
