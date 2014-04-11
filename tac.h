@@ -44,16 +44,24 @@ class Location
     int offset;
     Location *reference;
     int refOffset;
+
+    // The register allocated to this location.
+    // A "zero" indicates that no register has been allocated.
+    Mips::Register reg;
+
 	  
   public:
     Location(Segment seg, int offset, const char *name);
+
     Location(Location *base, int refOff) :
 	variableName(base->variableName), segment(base->segment),
 	offset(base->offset), reference(base), refOffset(refOff) {}
- 
+
     const char *GetName()           { return variableName; }
     Segment GetSegment()            { return segment; }
     int GetOffset()                 { return offset; }
+    void SetRegister(Mips::Register r)    { reg = r; }
+    Mips::Register GetRegister()          { return reg; }
     bool IsReference()              { return reference != NULL; }
     Location *GetReference()        { return reference; }
     int GetRefOffset()              { return refOffset; }
