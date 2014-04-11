@@ -173,6 +173,7 @@ class BinaryOp: public Instruction {
 class Label: public Instruction {
     const char *label;
   public:
+    const char * GetLabel() const { return label; }
     Label(const char *label);
     void Print();
     void EmitSpecific(Mips *mips);

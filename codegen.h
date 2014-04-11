@@ -24,6 +24,10 @@ class CodeGenerator {
     List<Instruction*> *code;
     int curStackOffset, curGlobalOffset;
     BeginFunc *insideFn;
+    Hashtable<int> *labelTable; 
+
+  private:
+    void PopulateLabelTable(); 
 
   public:
            // Here are some class constants to remind you of the offsets

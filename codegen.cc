@@ -16,6 +16,21 @@ CodeGenerator::CodeGenerator()
 {
   code = new List<Instruction*>();
   curGlobalOffset = 0;
+  labelTable = NULL;
+}
+
+void CodeGenerator::PopulateLabelTable()
+{
+    delete labelTable;
+    labelTable = new Hashtable<int>; 
+    
+    for(int i = 0; i < code->NumElements(); ++i) {
+        Instruction * ins = code->Nth(i);
+        Label *lb = dynamic_cast<Label*>(ins);
+        if(lb){
+            labelTable->Enter(lb->GetLabel(), i);
+        }
+    }
 }
 
 char *CodeGenerator::NewLabel()
