@@ -12,6 +12,9 @@
 #include <stdlib.h>
 #include "list.h"
 #include "tac.h"
+
+#include <unordered_set>
+
 class FnDecl;
  
 
@@ -22,12 +25,15 @@ typedef enum { Alloc, ReadLine, ReadInteger, StringEqual,
 class CodeGenerator {
   private:
     List<Instruction*> *code;
+    std::unordered_set<int> *parent;
     int curStackOffset, curGlobalOffset;
     BeginFunc *insideFn;
     Hashtable<int> *labelTable; 
 
   private:
     void PopulateLabelTable(); 
+
+    void MarkParent();
 
   public:
            // Here are some class constants to remind you of the offsets

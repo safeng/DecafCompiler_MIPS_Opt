@@ -80,6 +80,11 @@ class Instruction {
 	virtual void Print();
 	virtual void EmitSpecific(Mips *mips) = 0;
 	virtual void Emit(Mips *mips);
+
+        virtual bool IsBeginFunc()  { return false; }
+        virtual bool IsEndFunc()    { return false; }
+        virtual bool IsGoto()       { return false; }
+        virtual bool IsIfz()        { return false; }
 };
 
   
@@ -101,7 +106,7 @@ class Instruction {
   class EndFunc;
   class Return;
   class PushParam;
-  class RemoveParams;
+  class PopParams;
   class LCall;
   class ACall;
   class VTable;
@@ -183,7 +188,10 @@ class Goto: public Instruction {
     const char *label;
   public:
     Goto(const char *label);
+    const char *GetLabel() { return label; }
+
     void EmitSpecific(Mips *mips);
+        virtual bool IsGoto()       { return true; }
 };
 
 class IfZ: public Instruction {
@@ -191,7 +199,10 @@ class IfZ: public Instruction {
     const char *label;
   public:
     IfZ(Location *test, const char *label);
+    const char *GetLabel() { return label; }
+
     void EmitSpecific(Mips *mips);
+        virtual bool IsIfz()        { return true; }
 };
 
 class BeginFunc: public Instruction {
@@ -201,12 +212,14 @@ class BeginFunc: public Instruction {
     // used to backpatch the instruction with frame size once known
     void SetFrameSize(int numBytesForAllLocalsAndTemps);
     void EmitSpecific(Mips *mips);
+        virtual bool IsBeginFunc()  { return true; }
 };
 
 class EndFunc: public Instruction {
   public:
     EndFunc();
     void EmitSpecific(Mips *mips);
+        virtual bool IsEndFunc()    { return true; }
 };
 
 class Return: public Instruction {

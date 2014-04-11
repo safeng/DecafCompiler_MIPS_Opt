@@ -11,8 +11,39 @@
 #include "mips.h"
 #include "ast_decl.h"
 #include "errors.h"
+
+#include <unordered_set>
+
+void CodeGenerator::MarkParent()
+{
+    int len = code->NumElements();
+    bool in_fun = false;
+    delete[] parent;
+    parent = new std::unordered_set<int>[len]();
+    for (int i = 0; i < len - 2; i++) {
+        Instruction *line = code->Nth(i);
+        if (in_fun) {
+            if (line->IsEndFunc()) {
+                in_fun = false;
+            } else if (line->IsGoto()) {
+                Goto *g = static_cast<Goto*>(line);
+                const char *lbl = g->GetLabel();
+                parent[labelTable->Lookup(lbl)].insert(i);
+            } else if (line->IsIfz()) {
+                IfZ *g = static_cast<IfZ*>(line);
+                const char *lbl = g->GetLabel();
+                parent[labelTable->Lookup(lbl)].insert(i);
+                parent[i + 1].insert(i);
+            }
+        } else if (line->IsBeginFunc()) {
+            in_fun = true;
+            parent[i + 1].insert(i);
+        }
+    }
+}
   
-CodeGenerator::CodeGenerator()
+CodeGenerator::CodeGenerator() :
+    parent(NULL)
 {
   code = new List<Instruction*>();
   curGlobalOffset = 0;
