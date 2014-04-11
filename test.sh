@@ -38,7 +38,7 @@ then
             diff -urw ${BASE}.test ${BASE}.out
         fi
     done
-    rm samples/*.test.s samples/*.test
+    rm samples/*.test.s samples/*.test samples/*.out
 else
     echo -e "\e[31mBuild failed\e[0m"
 fi
