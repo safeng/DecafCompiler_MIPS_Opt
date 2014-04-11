@@ -24,15 +24,24 @@ typedef enum { Alloc, ReadLine, ReadInteger, StringEqual,
 
 class CodeGenerator {
   private:
+    struct TableEntry
+    {
+       Location *newVar;
+       int name;
+       TableEntry() : newVar(NULL), name(-1) {}
+    };
+
     List<Instruction*> *code;
     std::unordered_set<int> *parent;
     int curStackOffset, curGlobalOffset;
     BeginFunc *insideFn;
     Hashtable<int> *labelTable; 
+    TableEntry *ssa;
 
     void PopulateLabelTable(); 
     void MarkParent();
     void Optimise();
+    void PopulateSsaTable();
 
   public:
            // Here are some class constants to remind you of the offsets

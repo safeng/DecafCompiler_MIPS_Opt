@@ -12,7 +12,6 @@
 #include "ast_decl.h"
 #include "errors.h"
 
-#include <unordered_set>
 
 void CodeGenerator::MarkParent()
 {
@@ -45,13 +44,36 @@ void CodeGenerator::MarkParent()
     }
 }
 
+void CodeGenerator::PopulateSsaTable()
+{
+    int len = code->NumElements();
+    delete[] ssa;
+    ssa = new TableEntry[len];       
+    int nameIdx = 0;
+    bool in_func = false;
+    for(int i = 0; i < len; ++i){
+        Instruction *ins = code->Nth(i);
+        if(in_func) {
+            if(ins->IsEndFunc()) {
+                in_func = false;
+            }else if(ins->IsAssign()) {
+                ssa[i].newVar = ins->GetDst(); 
+                ssa[i].name = nameIdx++;
+            }
+        }else if(ins->IsBeginFunc()) {
+            in_func = true;
+            nameIdx = 0;
+        }
+    }
+}
+
 void CodeGenerator::Optimise()
 {
     MarkParent();
 }
 
 CodeGenerator::CodeGenerator() :
-    parent(NULL)
+    parent(NULL), ssa(NULL)
 {
     code = new List<Instruction*>();
     curGlobalOffset = 0;

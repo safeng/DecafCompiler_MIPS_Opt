@@ -81,10 +81,12 @@ class Instruction {
 	virtual void EmitSpecific(Mips *mips) = 0;
 	virtual void Emit(Mips *mips);
 
-        virtual bool IsBeginFunc()  { return false; }
-        virtual bool IsEndFunc()    { return false; }
-        virtual bool IsGoto()       { return false; }
-        virtual bool IsIfz()        { return false; }
+        virtual bool IsBeginFunc() const  { return false; }
+        virtual bool IsEndFunc()   const  { return false; }
+        virtual bool IsGoto()      const  { return false; }
+        virtual bool IsIfz()       const  { return false; }
+        virtual bool IsAssign()    const  { return false; }
+        virtual Location *GetDst() const  { return NULL; }
 };
 
   
@@ -120,6 +122,8 @@ class LoadConstant: public Instruction {
   public:
     LoadConstant(Location *dst, int val);
     void EmitSpecific(Mips *mips);
+    bool IsAssign() const { return true; }
+    Location *GetDst() const { return dst; }
 };
 
 class LoadStringConstant: public Instruction {
@@ -128,6 +132,8 @@ class LoadStringConstant: public Instruction {
   public:
     LoadStringConstant(Location *dst, const char *s);
     void EmitSpecific(Mips *mips);
+    bool IsAssign() const { return true; }
+    Location *GetDst() const { return dst; }
 };
     
 class LoadLabel: public Instruction {
@@ -143,6 +149,8 @@ class Assign: public Instruction {
   public:
     Assign(Location *dst, Location *src);
     void EmitSpecific(Mips *mips);
+    bool IsAssign() const { return true; }
+    Location *GetDst() const { return dst; }
 };
 
 class Load: public Instruction {
@@ -151,6 +159,8 @@ class Load: public Instruction {
   public:
     Load(Location *dst, Location *src, int offset = 0);
     void EmitSpecific(Mips *mips);
+    Location *GetDst() const { return dst; }
+    bool IsAssign() const { return true; }
 };
 
 class Store: public Instruction {
@@ -173,6 +183,8 @@ class BinaryOp: public Instruction {
   public:
     BinaryOp(Mips::OpCode c, Location *dst, Location *op1, Location *op2);
     void EmitSpecific(Mips *mips);
+    Location *GetDst() const { return dst; }
+    bool IsAssign() const { return true; }
 };
 
 class Label: public Instruction {
@@ -249,6 +261,8 @@ class LCall: public Instruction {
   public:
     LCall(const char *labe, Location *result);
     void EmitSpecific(Mips *mips);
+    Location *GetDst() const { return dst; }
+    bool IsAssign() const { return true; }
 };
 
 class ACall: public Instruction {
@@ -256,6 +270,8 @@ class ACall: public Instruction {
   public:
     ACall(Location *meth, Location *result);
     void EmitSpecific(Mips *mips);
+    Location *GetDst() const { return dst; }
+    bool IsAssign() const { return true; }
 };
 
 class VTable: public Instruction {
