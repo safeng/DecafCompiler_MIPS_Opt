@@ -85,8 +85,9 @@ class Instruction {
         virtual bool IsEndFunc()   const  { return false; }
         virtual bool IsGoto()      const  { return false; }
         virtual bool IsIfz()       const  { return false; }
-        virtual bool IsAssign()    const  { return false; }
         virtual Location *GetDst() const  { return NULL; }
+        virtual Location *GetAccess1() const  { return NULL; }
+        virtual Location *GetAccess2() const  { return NULL; }
 };
 
   
@@ -122,7 +123,6 @@ class LoadConstant: public Instruction {
   public:
     LoadConstant(Location *dst, int val);
     void EmitSpecific(Mips *mips);
-    bool IsAssign() const { return true; }
     Location *GetDst() const { return dst; }
 };
 
@@ -132,7 +132,6 @@ class LoadStringConstant: public Instruction {
   public:
     LoadStringConstant(Location *dst, const char *s);
     void EmitSpecific(Mips *mips);
-    bool IsAssign() const { return true; }
     Location *GetDst() const { return dst; }
 };
     
@@ -149,8 +148,8 @@ class Assign: public Instruction {
   public:
     Assign(Location *dst, Location *src);
     void EmitSpecific(Mips *mips);
-    bool IsAssign() const { return true; }
     Location *GetDst() const { return dst; }
+        virtual Location *GetAccess1() const  { return src; }
 };
 
 class Load: public Instruction {
@@ -160,7 +159,7 @@ class Load: public Instruction {
     Load(Location *dst, Location *src, int offset = 0);
     void EmitSpecific(Mips *mips);
     Location *GetDst() const { return dst; }
-    bool IsAssign() const { return true; }
+        virtual Location *GetAccess1() const  { return src; }
 };
 
 class Store: public Instruction {
@@ -169,6 +168,8 @@ class Store: public Instruction {
   public:
     Store(Location *d, Location *s, int offset = 0);
     void EmitSpecific(Mips *mips);
+        virtual Location *GetAccess1() const  { return dst; }
+        virtual Location *GetAccess2() const  { return src; }
 };
 
 class BinaryOp: public Instruction {
@@ -185,6 +186,8 @@ class BinaryOp: public Instruction {
     void EmitSpecific(Mips *mips);
     Location *GetDst() const { return dst; }
     bool IsAssign() const { return true; }
+        virtual Location *GetAccess1() const  { return op1; }
+        virtual Location *GetAccess2() const  { return op2; }
 };
 
 class Label: public Instruction {
@@ -215,6 +218,7 @@ class IfZ: public Instruction {
 
     void EmitSpecific(Mips *mips);
         virtual bool IsIfz()        { return true; }
+        virtual Location *GetAccess1() const  { return test; }
 };
 
 class BeginFunc: public Instruction {
@@ -241,6 +245,7 @@ class Return: public Instruction {
   public:
     Return(Location *val);
     void EmitSpecific(Mips *mips);
+        virtual Location *GetAccess1() const  { return val; }
 };   
 
 class PushParam: public Instruction {
@@ -248,6 +253,7 @@ class PushParam: public Instruction {
   public:
     PushParam(Location *param);
     void EmitSpecific(Mips *mips);
+        virtual Location *GetAccess1() const  { return param; }
 }; 
 
 class PopParams: public Instruction {
@@ -264,7 +270,6 @@ class LCall: public Instruction {
     LCall(const char *labe, Location *result);
     void EmitSpecific(Mips *mips);
     Location *GetDst() const { return dst; }
-    bool IsAssign() const { return true; }
 };
 
 class ACall: public Instruction {
@@ -273,7 +278,6 @@ class ACall: public Instruction {
     ACall(Location *meth, Location *result);
     void EmitSpecific(Mips *mips);
     Location *GetDst() const { return dst; }
-    bool IsAssign() const { return true; }
 };
 
 class VTable: public Instruction {

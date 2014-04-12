@@ -29,14 +29,6 @@ struct SSAVar {
     int end_line;
 };
 
-class DataFlow {
-    private:
-        map<Location*, int> *assoc;
-        struct SSAVar *varlist;
-
-    public:
-};
-
 class CodeGenerator {
   private:
     List<Instruction*> *code;
@@ -44,12 +36,15 @@ class CodeGenerator {
     int curStackOffset, curGlobalOffset;
     BeginFunc *insideFn;
     Hashtable<int> *labelTable; 
-    DataFlow *ssa;
+    vector<struct SSAVar*> varlist;
+    map<Location*, int> **assoc;
 
     void PopulateLabelTable(); 
     void MarkParent();
     void Optimise();
     void PopulateSsaTable();
+    void AddAssign(Location *var);
+    void AddAccess(Location *var);
 
   public:
            // Here are some class constants to remind you of the offsets

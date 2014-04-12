@@ -47,22 +47,21 @@ void CodeGenerator::MarkParent()
 void CodeGenerator::PopulateSsaTable()
 {
     int len = code->NumElements();
-    delete[] ssa;
-    ssa = new TableEntry[len];       
-    int nameIdx = 0;
-    bool in_func = false;
-    for(int i = 0; i < len; ++i){
+    delete[] assoc;
+    assoc = new (map<Location*, int>*)[len];
+    BeginFunc *bf = NULL;
+    for (int i = 0; i < len; i++) {
         Instruction *ins = code->Nth(i);
-        if(in_func) {
-            if(ins->IsEndFunc()) {
-                in_func = false;
-            }else if(ins->IsAssign()) {
-                ssa[i].newVar = ins->GetDst(); 
-                ssa[i].name = nameIdx++;
+        if (bf != NULL) {
+            if (ins->IsEndFunc()) {
+                bf = NULL;
+            } else {
+                AddAssign(ins->GetDst());
+                AddAccess(ins->GetAccess1());
+                AddAccess(ins->GetAccess2());
             }
-        }else if(ins->IsBeginFunc()) {
-            in_func = true;
-            nameIdx = 0;
+        } else if (ins->IsBeginFunc()) {
+            bf = static_cast<BeginFunc*>(ins);
         }
     }
 }
