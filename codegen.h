@@ -13,6 +13,7 @@
 #include "list.h"
 #include "tac.h"
 
+#include <vector>
 #include <unordered_set>
 
 class FnDecl;
@@ -22,21 +23,24 @@ class FnDecl;
 typedef enum { Alloc, ReadLine, ReadInteger, StringEqual,
                PrintInt, PrintString, PrintBool, Halt, NumBuiltIns } BuiltIn;
 
+class DataFlow {
+    private:
+        map<Location*, int> assoc;
+        struct SSAVar {
+            int def_line;
+            int weight;
+            int end_line;
+        };
+};
+
 class CodeGenerator {
   private:
-    struct TableEntry
-    {
-       Location *newVar;
-       int name;
-       TableEntry() : newVar(NULL), name(-1) {}
-    };
-
     List<Instruction*> *code;
     std::unordered_set<int> *parent;
     int curStackOffset, curGlobalOffset;
     BeginFunc *insideFn;
     Hashtable<int> *labelTable; 
-    TableEntry *ssa;
+    DataFlow *ssa;
 
     void PopulateLabelTable(); 
     void MarkParent();
