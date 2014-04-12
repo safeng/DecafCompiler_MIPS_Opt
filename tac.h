@@ -219,11 +219,13 @@ class IfZ: public Instruction {
 
 class BeginFunc: public Instruction {
     int frameSize;
+    int narg;
   public:
-    BeginFunc();
+    BeginFunc(int narg);
     // used to backpatch the instruction with frame size once known
     void SetFrameSize(int numBytesForAllLocalsAndTemps);
     void EmitSpecific(Mips *mips);
+        int arg_len() {return narg;}
         virtual bool IsBeginFunc()  { return true; }
 };
 

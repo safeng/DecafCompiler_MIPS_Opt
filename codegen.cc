@@ -197,11 +197,11 @@ void CodeGenerator::GenReturn(Location *val)
 }
 
 
-BeginFunc *CodeGenerator::GenBeginFunc(FnDecl *fn)
+BeginFunc *CodeGenerator::GenBeginFunc(FnDecl *fn, int narg)
 {
-    BeginFunc *result = new BeginFunc;
-    code->Append(insideFn = result);
     List<VarDecl*> *formals = fn->GetFormals();
+    BeginFunc *result = new BeginFunc(formals->NumElements());
+    code->Append(insideFn = result);
     int start = OffsetToFirstParam;
     if (fn->IsMethodDecl()) start += VarSize;
     for (int i = 0; i < formals->NumElements(); i++)

@@ -23,14 +23,18 @@ class FnDecl;
 typedef enum { Alloc, ReadLine, ReadInteger, StringEqual,
                PrintInt, PrintString, PrintBool, Halt, NumBuiltIns } BuiltIn;
 
+struct SSAVar {
+    int def_line;
+    int weight;
+    int end_line;
+};
+
 class DataFlow {
     private:
-        map<Location*, int> assoc;
-        struct SSAVar {
-            int def_line;
-            int weight;
-            int end_line;
-        };
+        map<Location*, int> *assoc;
+        struct SSAVar *varlist;
+
+    public:
 };
 
 class CodeGenerator {
@@ -167,7 +171,7 @@ class CodeGenerator {
 
          // These methods generate the Tac instructions that mark the start
          // and end of a function/method definition. 
-    BeginFunc *GenBeginFunc(FnDecl *fn);
+    BeginFunc *GenBeginFunc(FnDecl *fn, int narg);
     void GenEndFunc();
 
     
