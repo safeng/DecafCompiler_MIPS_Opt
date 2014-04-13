@@ -41,6 +41,11 @@ void Instruction::Emit(Mips *mips)
     EmitSpecific(mips);
 }
 
+void LoadStringConstant::EmitSpecific(Mips *mips) {
+  mips->EmitLoadStringConstant(dst, str);
+}
+
+
 LoadConstant::LoadConstant(Location *d, int v):
     dst(d),
     val(v)

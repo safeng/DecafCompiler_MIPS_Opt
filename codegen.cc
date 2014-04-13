@@ -284,6 +284,27 @@ void CodeGenerator::PopulateRegMap()
     }
 }
 
+void CodeGenerator::AddAssign(Location *var, int idx)
+{
+    if(var == NULL)
+        return;
+    else {
+        varlist.push_back(new SSAVar(var->GetOffset()));
+        assoc[idx].insert(std::make_pair(var, (int)varlist.size() - 1));
+    }
+}
+
+void CodeGenerator::AddAccess(Location *var, int idx)
+{
+    if(var == NULL)
+        return;
+    else {
+        // iterate the parents in CFG
+        for(auto it = parent[idx].begin(); it != parent[idx].end(); ++it) {
+        }
+    }
+}
+
 void CodeGenerator::Optimise()
 {
     PopulateLabelTable();
