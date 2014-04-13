@@ -185,7 +185,6 @@ class BinaryOp: public Instruction {
     BinaryOp(Mips::OpCode c, Location *dst, Location *op1, Location *op2);
     void EmitSpecific(Mips *mips);
     Location *GetDst() const { return dst; }
-    bool IsAssign() const { return true; }
         virtual Location *GetAccess1() const  { return op1; }
         virtual Location *GetAccess2() const  { return op2; }
 };

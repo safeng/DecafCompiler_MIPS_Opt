@@ -47,8 +47,12 @@ void CodeGenerator::MarkParent()
 void CodeGenerator::PopulateSsaTable()
 {
     int len = code->NumElements();
+    for(int i = 0; i<(int)varlist.size(); ++i) {
+        delete varlist[i];
+    }
+    varlist.clear();
     delete[] assoc;
-    assoc = new (map<Location*, int>*)[len];
+    assoc = new std::unordered_map<Location*, int>[len];
     BeginFunc *bf = NULL;
     for (int i = 0; i < len; i++) {
         Instruction *ins = code->Nth(i);
@@ -56,12 +60,33 @@ void CodeGenerator::PopulateSsaTable()
             if (ins->IsEndFunc()) {
                 bf = NULL;
             } else {
-                AddAssign(ins->GetDst());
-                AddAccess(ins->GetAccess1());
-                AddAccess(ins->GetAccess2());
+                AddAssign(ins->GetDst(), i);
+                AddAccess(ins->GetAccess1(), i);
+                AddAccess(ins->GetAccess2(), i);
             }
         } else if (ins->IsBeginFunc()) {
             bf = static_cast<BeginFunc*>(ins);
+        }
+    }
+}
+
+void CodeGenerator::AddAssign(Location *var, int idx)
+{
+    if(var == NULL)
+        return;
+    else {
+        varlist.push_back(new SSAVar(var->GetOffset()));
+        assoc[idx].insert(std::make_pair(var, (int)varlist.size() - 1));
+    }
+}
+
+void CodeGenerator::AddAccess(Location *var, int idx)
+{
+    if(var == NULL)
+        return;
+    else {
+        // iterate the parents in CFG
+        for(auto it = parent[idx].begin(); it != parent[idx].end(); ++it) {
         }
     }
 }

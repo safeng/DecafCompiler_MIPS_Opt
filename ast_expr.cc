@@ -189,7 +189,7 @@ Type * AssignExpr::CheckAndComputeResultType() {
     }
     return lhs;
 }
-  void AssignExpr::Emit(CodeGenerator *cg) {
+void AssignExpr::Emit(CodeGenerator *cg) {
     dynamic_cast<LValue *>(left)->EmitWithoutDereference(cg); //sad, but if want to be compound....
     right->Emit(cg);
     if (left->result->IsReference()) {
@@ -197,13 +197,13 @@ Type * AssignExpr::CheckAndComputeResultType() {
     } else
         cg->GenAssign(left->result, right->result);
     result = left->result;
-  }
-  void LValue::Emit(CodeGenerator *cg)
-  {
+}
+void LValue::Emit(CodeGenerator *cg)
+{
     EmitWithoutDereference(cg);
     if (result->IsReference()) 
-	result = cg->GenLoad(result->GetReference(), result->GetRefOffset());
-  }
+        result = cg->GenLoad(result->GetReference(), result->GetRefOffset());
+}
 Type* This::CheckAndComputeResultType() {
     if (!enclosingClass) enclosingClass = FindSpecificParent<ClassDecl>();
    if (!enclosingClass)  
@@ -214,17 +214,16 @@ Type* This::CheckAndComputeResultType() {
 
 static Location *ThisLocation = new Location(fpRelative, 4, "this");
 
- void This::Emit(CodeGenerator *cg) {
-   if (!result)
-    result = ThisLocation;
- }
+void This::Emit(CodeGenerator *cg) {
+    if (!result)
+        result = ThisLocation;
+}
  
-   
-  
 ArrayAccess::ArrayAccess(yyltype loc, Expr *b, Expr *s) : LValue(loc) {
     (base=b)->SetParent(this); 
     (subscript=s)->SetParent(this);
 }
+
 Type *ArrayAccess::CheckAndComputeResultType() {
     Type *baseT = base->CheckAndComputeResultType();
     if ((baseT != Type::errorType) && !baseT->IsArrayType()) 
@@ -412,4 +411,3 @@ void ReadLineExpr::Emit(CodeGenerator *cg) {
     result = cg->GenBuiltInCall(ReadLine);
 }
 
-       

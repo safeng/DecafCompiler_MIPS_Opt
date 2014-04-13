@@ -15,6 +15,8 @@
 
 #include <vector>
 #include <unordered_set>
+#include <unorder_map>
+#include <pair>
 
 class FnDecl;
  
@@ -27,6 +29,8 @@ struct SSAVar {
     int def_line;
     int weight;
     int end_line;
+    SSAVar(int def_line, int weight = 1, int end_line = 0) : 
+        def_line(def_line), weight(weight), end_line(end_line) {}
 };
 
 class CodeGenerator {
@@ -36,15 +40,15 @@ class CodeGenerator {
     int curStackOffset, curGlobalOffset;
     BeginFunc *insideFn;
     Hashtable<int> *labelTable; 
-    vector<struct SSAVar*> varlist;
-    map<Location*, int> **assoc;
+    std::vector<SSAVar*> varlist;
+    std::unordered_map<Location*, int> *assoc; 
 
     void PopulateLabelTable(); 
     void MarkParent();
     void Optimise();
     void PopulateSsaTable();
-    void AddAssign(Location *var);
-    void AddAccess(Location *var);
+    void AddAssign(Location *var, int idx);
+    void AddAccess(Location *var, int idx);
 
   public:
            // Here are some class constants to remind you of the offsets

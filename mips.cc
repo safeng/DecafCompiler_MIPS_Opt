@@ -49,9 +49,10 @@ void Mips::SpillRegister(Location *dst, Register reg)
   Assert(dst);
   const char *offsetFromWhere = dst->GetSegment() == fpRelative? regs[fp].name : regs[gp].name;
   Assert(dst->GetOffset() % 4 == 0); // all variables are 4 bytes in size
+  // store value in reg into memory
   Emit("sw %s, %d(%s)\t# spill %s from %s to %s%+d", regs[reg].name,
        dst->GetOffset(), offsetFromWhere, dst->GetName(), regs[reg].name,
-       offsetFromWhere,dst->GetOffset());
+       offsetFromWhere, dst->GetOffset());
 }
 
 /* Method: FillRegister
@@ -64,11 +65,11 @@ void Mips::FillRegister(Location *src, Register reg)
   Assert(src);
   const char *offsetFromWhere = src->GetSegment() == fpRelative? regs[fp].name : regs[gp].name;
   Assert(src->GetOffset() % 4 == 0); // all variables are 4 bytes in size
+  // load from memory into reg
   Emit("lw %s, %d(%s)\t# fill %s to %s from %s%+d", regs[reg].name,
        src->GetOffset(), offsetFromWhere, src->GetName(), regs[reg].name,
        offsetFromWhere,src->GetOffset());
 }
-
 
 
 /* Method: Emit
@@ -116,6 +117,9 @@ void Mips::EmitLoadConstant(Location *dst, int val)
  */
 void Mips::EmitLoadStringConstant(Location *dst, const char *str)
 {
+  // string literals are stored in data segment. However, the space is
+  // allocated, when it is first accessed (like local static data). Data segment
+  // can still be expanded during run time
   static int strNum = 1;
   char label[16];
   sprintf(label, "_string%d", strNum++);
@@ -133,6 +137,8 @@ void Mips::EmitLoadStringConstant(Location *dst, const char *str)
  */
 void Mips::EmitLoadLabel(Location *dst, const char *label)
 {
+  // label is used to mark in data (global, static, vtable, string literals) and
+  // text/code segment (function code)
   Register reg = dst->GetRegister() ? dst->GetRegister() : rd;
   Emit("la %s, %s\t# load label", regs[reg].name, label);
   if (!dst->GetRegister()) SpillRegister(dst, reg);
@@ -204,6 +210,8 @@ void Mips::EmitStore(Location *reference, Location *value, int offset)
 void Mips::EmitBinaryOp(OpCode code, Location *dst, 
 			Location *op1, Location *op2)
 {
+  // if the operands or return variables are spilled. Use reserved registers to
+  // hold their values
   Register reg = dst->GetRegister() ? dst->GetRegister() : rd;
   Register reg1 = op1->GetRegister() ? op1->GetRegister() : rs;
   Register reg2 = op2->GetRegister() ? op2->GetRegister() : rt;
@@ -337,6 +345,7 @@ void Mips::EmitPopParams(int bytes)
  */
  void Mips::EmitReturn(Location *returnVal)
 { 
+  // move the return value to a reserved register
   if (returnVal != NULL) 
     {
       if (returnVal->GetRegister()) 
@@ -363,9 +372,9 @@ void Mips::EmitBeginFunction(int stackFrameSize)
 {
   Assert(stackFrameSize >= 0);
   Emit("subu $sp, $sp, 8\t# decrement sp to make space to save ra, fp");
-  Emit("sw $fp, 8($sp)\t# save fp");
-  Emit("sw $ra, 4($sp)\t# save ra");
-  Emit("addiu $fp, $sp, 8\t# set up new fp");
+  Emit("sw $fp, 8($sp)\t# save fp"); // save $fp to stack
+  Emit("sw $ra, 4($sp)\t# save ra"); // save $ra to stack
+  Emit("addiu $fp, $sp, 8\t# set up new fp"); // update new fp value to $fp
 
   if (stackFrameSize != 0)
     Emit("subu $sp, $sp, %d\t# decrement sp to make space for locals/temps",
@@ -382,7 +391,7 @@ void Mips::EmitBeginFunction(int stackFrameSize)
 void Mips::EmitEndFunction()
 { 
   Emit("# (below handles reaching end of fn body with no explicit return)");
-  EmitReturn(NULL);
+  EmitReturn(NULL); // call emitreturn as if return null
 }
 
 
@@ -395,12 +404,14 @@ void Mips::EmitEndFunction()
  */
 void Mips::EmitVTable(const char *label, List<const char*> *methodLabels)
 {
+  // vtable is stored in data segment. global variable is stored in data seg too
   Emit(".data");
   Emit(".align 2");
   Emit("%s:\t\t# label for class %s vtable", label, label);
   for (int i = 0; i < methodLabels->NumElements(); i++)
     Emit(".word %s\n", methodLabels->Nth(i));
   Emit(".text");
+  // followed by code segment
 }
 
 
@@ -462,6 +473,7 @@ Mips::Mips() {
   regs[sp] = (RegContents){"$sp", false};
   regs[fp] = (RegContents){"$fp", false};
   regs[ra] = (RegContents){"$ra", true};
+  /* ts and ss are general purpose registers */
   regs[t0] = (RegContents){"$t0", true};
   regs[t1] = (RegContents){"$t1", true};
   regs[t2] = (RegContents){"$t2", true};
@@ -480,17 +492,18 @@ Mips::Mips() {
   regs[s5] = (RegContents){"$s5", true};
   regs[s6] = (RegContents){"$s6", true};
   regs[s7] = (RegContents){"$s7", true};
-  rs = v0; rt = v1; rd = v0;
+  rs = v0; rt = v1; rd = v0; // not general purpose reg for function's return value
 }
+
 const char *Mips::mipsName[NumOps];
 
 void Mips::SaveCaller(Location *location) {
     if (location->GetRegister())
-	SpillRegister(location, location->GetRegister());
+	SpillRegister(location, location->GetRegister()); // save register's value into mem
 }
 
 void Mips::RestoreCaller(Location *location) {
     if (location->GetRegister())
-	FillRegister(location, location->GetRegister());
+	FillRegister(location, location->GetRegister()); // load from mem to allocated reg
 }
 

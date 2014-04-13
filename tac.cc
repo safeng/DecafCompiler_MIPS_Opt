@@ -45,7 +45,6 @@ void LoadStringConstant::EmitSpecific(Mips *mips) {
   mips->EmitLoadStringConstant(dst, str);
 }
 
-     
 
 LoadLabel::LoadLabel(Location *d, const char *l)
   : dst(d), label(strdup(l)) {
