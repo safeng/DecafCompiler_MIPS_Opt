@@ -149,7 +149,7 @@ class Assign: public Instruction {
     Assign(Location *dst, Location *src);
     void EmitSpecific(Mips *mips);
     Location *GetDst() const { return dst; }
-        virtual Location *GetAccess1() const  { return src; }
+    virtual Location *GetAccess1() const  { return src; }
 };
 
 class Load: public Instruction {
@@ -159,7 +159,7 @@ class Load: public Instruction {
     Load(Location *dst, Location *src, int offset = 0);
     void EmitSpecific(Mips *mips);
     Location *GetDst() const { return dst; }
-        virtual Location *GetAccess1() const  { return src; }
+    virtual Location *GetAccess1() const  { return src; }
 };
 
 class Store: public Instruction {
@@ -168,8 +168,8 @@ class Store: public Instruction {
   public:
     Store(Location *d, Location *s, int offset = 0);
     void EmitSpecific(Mips *mips);
-        virtual Location *GetAccess1() const  { return dst; }
-        virtual Location *GetAccess2() const  { return src; }
+    virtual Location *GetAccess1() const  { return src; }
+    virtual Location *GetAccess2() const  { return dst; }
 };
 
 class BinaryOp: public Instruction {
@@ -177,7 +177,7 @@ class BinaryOp: public Instruction {
   public:
     static const char * const opName[Mips::NumOps];
     static Mips::OpCode OpCodeForName(const char *name);
-    
+
   protected:
     Mips::OpCode code;
     Location *dst, *op1, *op2;
@@ -185,8 +185,8 @@ class BinaryOp: public Instruction {
     BinaryOp(Mips::OpCode c, Location *dst, Location *op1, Location *op2);
     void EmitSpecific(Mips *mips);
     Location *GetDst() const { return dst; }
-        virtual Location *GetAccess1() const  { return op1; }
-        virtual Location *GetAccess2() const  { return op2; }
+    virtual Location *GetAccess1() const  { return op1; }
+    virtual Location *GetAccess2() const  { return op2; }
 };
 
 class Label: public Instruction {
@@ -205,7 +205,7 @@ class Goto: public Instruction {
     const char *GetLabel() { return label; }
 
     void EmitSpecific(Mips *mips);
-        virtual bool IsGoto()       { return true; }
+    virtual bool IsGoto()       { return true; }
 };
 
 class IfZ: public Instruction {
@@ -216,8 +216,8 @@ class IfZ: public Instruction {
     const char *GetLabel() { return label; }
 
     void EmitSpecific(Mips *mips);
-        virtual bool IsIfz()        { return true; }
-        virtual Location *GetAccess1() const  { return test; }
+    virtual bool IsIfz()        { return true; }
+    virtual Location *GetAccess1() const  { return test; }
 };
 
 class BeginFunc: public Instruction {
@@ -228,15 +228,15 @@ class BeginFunc: public Instruction {
     // used to backpatch the instruction with frame size once known
     void SetFrameSize(int numBytesForAllLocalsAndTemps);
     void EmitSpecific(Mips *mips);
-        int arg_len() {return narg;}
-        virtual bool IsBeginFunc()  { return true; }
+    int arg_len() {return narg;}
+    virtual bool IsBeginFunc()  { return true; }
 };
 
 class EndFunc: public Instruction {
   public:
     EndFunc();
     void EmitSpecific(Mips *mips);
-        virtual bool IsEndFunc()    { return true; }
+    virtual bool IsEndFunc()    { return true; }
 };
 
 class Return: public Instruction {
@@ -244,15 +244,15 @@ class Return: public Instruction {
   public:
     Return(Location *val);
     void EmitSpecific(Mips *mips);
-        virtual Location *GetAccess1() const  { return val; }
-};   
+    virtual Location *GetAccess1() const  { return val; }
+};
 
 class PushParam: public Instruction {
     Location *param;
   public:
     PushParam(Location *param);
     void EmitSpecific(Mips *mips);
-        virtual Location *GetAccess1() const  { return param; }
+    virtual Location *GetAccess1() const  { return param; }
 }; 
 
 class PopParams: public Instruction {

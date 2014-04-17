@@ -13,95 +13,215 @@
 #include "errors.h"
 
 
-void CodeGenerator::MarkParent()
+void CodeGenerator::MarkSuccessor()
 {
     int len = code->NumElements();
-    bool in_fun = false;
-    delete[] parent;
-    parent = new std::unordered_set<int>[len]();
+    bool in_func = false;
+    delete[] succ;
+    succ = new std::unordered_set<int>[len];
     PopulateLabelTable();
-    for (int i = 1; i < len; i++) {
-        Instruction *line = code->Nth(i - 1);
-        if (in_fun) {
+    for (int i = 0; i < len - 1; i++) {
+        Instruction *line = code->Nth(i);
+        if (in_func) {
             if (line->IsEndFunc()) {
-                in_fun = false;
+                in_func = false; // EndFunc has no successors
             } else if (line->IsGoto()) {
                 Goto *g = static_cast<Goto*>(line);
                 const char *lbl = g->GetLabel();
-                parent[labelTable->Lookup(lbl)].insert(i - 1);
+                succ[i].insert(labelTable->Lookup(lbl));
             } else if (line->IsIfz()) {
                 IfZ *g = static_cast<IfZ*>(line);
                 const char *lbl = g->GetLabel();
-                parent[labelTable->Lookup(lbl)].insert(i - 1);
-                parent[i].insert(i - 1);
+                succ[i].insert(labelTable->Lookup(lbl));
+                succ[i].insert(i + 1);
             } else {
-                parent[i].insert(i - 1);
+                succ[i].insert(i + 1);
             }
         } else if (line->IsBeginFunc()) {
-            in_fun = true;
-            parent[i].insert(i - 1);
+            in_func = true;
+            succ[i].insert(i + 1);
         }
     }
 }
 
-void CodeGenerator::PopulateSsaTable()
+// assume that set1 and set2 are sorted
+static void Set_Union(std::vector<Location *> &set1, std::vector<Location *> &set2,
+        std::vector<Location *> &result)
 {
-    int len = code->NumElements();
-    for(int i = 0; i<(int)varlist.size(); ++i) {
-        delete varlist[i];
+    result.clear();
+    result.resize(set1.size()+set2.size());
+    vector<Location*>::iterator it;
+    it = std::set_union(set1.begin(), set1.end(), set2.begin(), set2.end(),
+            result.begin());
+    result.resize(it-result.begin());
+}
+
+static void Set_Diff(std::vector<Location *> &set1, std::vector<Location *> &set2,
+        std::vector<Location *> &result)
+{
+    result.clear();
+    result.resize(set1.size());
+    vector<Location *>::iterator it;
+    it = std::set_difference(set1.begin(), set1.end(), set2.begin(), set2.end(),
+            result.begin());
+    result.resize(it-result.begin());
+}
+
+static bool operator == (const std::vector<Location*> &op1,
+        const std::vector<Location *> &op2)
+{
+    if(op1.size() != op2.size()) {
+        return false;
+    }else {
+        return std::equal(op1.cbegin(), op1.cend(), op2.cbegin());
     }
-    varlist.clear();
-    delete[] assoc;
-    assoc = new std::unordered_map<Location*, int>[len];
-    BeginFunc *bf = NULL;
-    for (int i = 0; i < len; i++) {
-        Instruction *ins = code->Nth(i);
-        if (bf != NULL) {
-            if (ins->IsEndFunc()) {
-                bf = NULL;
-            } else {
-                AddAssign(ins->GetDst(), i);
-                AddAccess(ins->GetAccess1(), i);
-                AddAccess(ins->GetAccess2(), i);
+}
+
+void CodeGenerator::_LivenessAnalysis(int start_line, int end_line)
+{
+    bool changed = true;
+    while(changed) {
+        changed = true;
+        // OUT[tac]=Union(IN[SUCC(tac)])
+        for(int i = start_line; i <= end_line; ++i) {
+            std::vector<Location*> tmp, tmp_res; 
+            for(auto it = succ[i].begin(); it != succ[i].end(); ++it) {
+                Set_Union(tmp, in[*it], tmp_res);
+                tmp.assign(tmp_res.begin(), tmp_res.end());
             }
-        } else if (ins->IsBeginFunc()) {
-            bf = static_cast<BeginFunc*>(ins);
+            out[i].assign(tmp_res.begin(), tmp_res.end());
+            // IN'=OUT-KILL+GEN
+            std::vector<Location*> tmp_in;
+            Instruction *ins = code->Nth(i);
+            Location *dst = ins->GetDst();
+            if(dst != NULL && kill[i].empty()) {
+                kill[i].push_back(dst);
+            }
+            Location *acc1 = ins->GetAccess1();
+            Location *acc2 = ins->GetAccess2();
+            std::vector<Location *> gen;
+            if(acc1 != NULL) {
+                gen.push_back(acc1);
+            }
+            if(acc2 != NULL) {
+                gen.push_back(acc2);
+            }
+            std::sort(gen.begin(), gen.end());
+            Set_Diff(out[i], kill[i], tmp_res);
+            Set_Union(tmp_res, gen, tmp_in);
+            if(!(tmp_in == in[i])) {
+                in[i].assign(tmp_in.begin(), tmp_in.end());
+                changed = true;
+            }
         }
     }
 }
 
-void CodeGenerator::AddAssign(Location *var, int idx)
+void CodeGenerator::LivenessAnalysis()
 {
-    if(var == NULL)
-        return;
-    else {
-        varlist.push_back(new SSAVar(var->GetOffset()));
-        assoc[idx].insert(std::make_pair(var, (int)varlist.size() - 1));
+    delete[] in;
+    delete[] out;
+    delete[] kill;
+    int len = code->NumElements();
+    in = new std::vector<Location*>[len];
+    out = new std::vector<Location*>[len];
+    kill = new std::vector<Location*>[len];
+    bool in_func = false;
+    int start_line = 0, end_line = 0;
+    /* locate a function and do liveness analysis inside each function */
+    for(int i = 0; i < len; ++i) {
+        Instruction *ins = code->Nth(i);
+        if(in_func) {
+            if (line->IsEndFunc()) {
+                in_func = false;
+                end_line = i;
+                // liveness analysis for one function
+                _LivenessAnalysis(start_line, end_line);
+            }
+        }else if(line->IsBeginFunc()) {
+            in_func = true;
+            start_line = i;
+        }
     }
 }
 
-void CodeGenerator::AddAccess(Location *var, int idx)
+/* Return constructed graph for the function */
+CodeGenerator::InterferenceGraph* CodeGenerator::
+        _BuildInterferenceGraph(int start_line, int end_line)
 {
-    if(var == NULL)
-        return;
-    else {
-        // iterate the parents in CFG
-        for(auto it = parent[idx].begin(); it != parent[idx].end(); ++it) {
+    InterferenceGraph *graph = new InterferenceGraph;
+    for(int i = start_line; i <= end_line; ++i) {
+        Instruction *ins = code->Nth(i);
+        std::vector<Location *> inter_set;
+        Set_Union(out[i], kill[i], inter_set);
+        // for each pair of nodes in inter_set add edges between them
+        int len = (int)inter_set.size();
+        for(int j = 0; j < len; ++j) {
+            for(int k = j+1; k < len; ++k) {
+                auto it = graph->find(inter_set[j]);
+                if(it == graph->end()) {
+                    std::list<Location *> neigh = {inter_set[k]};
+                    graph->insert(std::make_pair(inter_set[j], neigh));
+                }else 
+                {
+                    it->second.push_back(inter_set[k]);
+                }
+                auto it2 = graph->find(inter_set[k]);
+                if(it2 == graph->end()) {
+                    std::list<Location *> neigh = {inter_set[j]};
+                    graph->insert(std::make_pair(inter_set[k], neigh));
+                }else {
+                    it2->second.push_back(inter_set[j]);
+                }
+            }
+        }
+    }
+    return graph;
+}
+
+void CodeGenerator::_RegisterAlloc(InterferenceGraph *graph, 
+        int start_line, int end_line)
+{
+    std::unordered_set<Location *> remove_list;
+    std::stack<Location *> node_stk;
+}
+
+void CodeGenerator::GraphColoring()
+{
+    std::memset(freeList, false, sizeof(freeList));
+    bool in_func = false;
+    int start_line = 0, end_line = 0;
+    /* locate a function and do liveness analysis inside each function */
+    for(int i = 0; i < len; ++i) {
+        Instruction *ins = code->Nth(i);
+        if(in_func) {
+            if (line->IsEndFunc()) {
+                in_func = false;
+                end_line = i;
+                InterferenceGraph *graph = 
+                    _BuildInterferenceGraph(start_line, end_line);
+                _RegisterAlloc(graph, start_line, end_line);
+                delete graph;
+            }
+        }else if(line->IsBeginFunc()) {
+            in_func = true;
+            start_line = i;
         }
     }
 }
 
 void CodeGenerator::Optimise()
 {
-    MarkParent();
+    MarkSuccessor();
+    LivenessAnalysis();
+    GraphColoring();
 }
 
 CodeGenerator::CodeGenerator() :
-    parent(NULL), ssa(NULL)
+    labelTable(NULL), succ(NULL), in(NULL), out(NULL), kill(NULL)
 {
     code = new List<Instruction*>();
     curGlobalOffset = 0;
-    labelTable = NULL;
 }
 
 void CodeGenerator::PopulateLabelTable()

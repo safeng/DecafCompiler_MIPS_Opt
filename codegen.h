@@ -15,40 +15,43 @@
 
 #include <vector>
 #include <unordered_set>
-#include <unorder_map>
+#include <unordered_map>
+#include <algorithm>
 #include <pair>
+#include <cstring>
+#include <stack>
 
 class FnDecl;
- 
+
 
               // These codes are used to identify the built-in functions
 typedef enum { Alloc, ReadLine, ReadInteger, StringEqual,
                PrintInt, PrintString, PrintBool, Halt, NumBuiltIns } BuiltIn;
 
-struct SSAVar {
-    int def_line;
-    int weight;
-    int end_line;
-    SSAVar(int def_line, int weight = 1, int end_line = 0) : 
-        def_line(def_line), weight(weight), end_line(end_line) {}
-};
-
 class CodeGenerator {
   private:
     List<Instruction*> *code;
-    std::unordered_set<int> *parent;
     int curStackOffset, curGlobalOffset;
     BeginFunc *insideFn;
-    Hashtable<int> *labelTable; 
-    std::vector<SSAVar*> varlist;
-    std::unordered_map<Location*, int> *assoc; 
+    Hashtable<int> *labelTable; // index in tac list for each label
+    std::unordered_set<int> *succ; // store the successors for each tac
+    std::vector<Location*> *in, *out, *kill; // IN, OUT, KILL set for each tac
+    bool freeList[Mips::NumGeneralPurposeRegs];
 
+  public:
+    typedef std::unordered_map<Location*, std::list<Location*> > InterferenceGraph;
+    /* Code optimization */
+  private:
     void PopulateLabelTable(); 
-    void MarkParent();
+    void MarkSuccessor();
+    void LivenessAnalysis();
+    void _LivenessAnalysis(int start_line, int end_line);
+    void GraphColoring();
+    InterferenceGraph * _BuildInterferenceGraph(InterferenceGraph *graph, 
+            int start_line, int end_line);
+    void _RegisterAlloc(int start_line, int end_line);
+    inline bool FindFreeReg(Mips::Register &reg);
     void Optimise();
-    void PopulateSsaTable();
-    void AddAssign(Location *var, int idx);
-    void AddAccess(Location *var, int idx);
 
   public:
            // Here are some class constants to remind you of the offsets
@@ -67,7 +70,7 @@ class CodeGenerator {
     static const int VarSize = 4;
 
     CodeGenerator();
-    
+
          // Assigns a new unique label name and returns it. Does not
          // generate any Tac instructions (see GenLabel below if needed)
     char *NewLabel();
@@ -200,5 +203,17 @@ class CodeGenerator {
     Location *GenMethodCall(Location*rcvr, Location*meth, List<Location*> *args, bool hasReturnValue);
     void GenHaltWithMessage(const char *msg);
 };
+
+inline bool CodeGenerator::FindFreeReg(Mips::Register &reg)
+{
+    for(int i = 0; i < Mips::NumGeneralPurposeRegs; ++i) {
+        if(freeList[i] == false) {
+            reg = static_cast<Mips::Register>(Mips::t0 + i);
+            freeList[i] = true;
+            return true;
+        }
+    }
+    return false;
+}
 
 #endif
