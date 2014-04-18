@@ -29,6 +29,10 @@ typedef enum { Alloc, ReadLine, ReadInteger, StringEqual,
                PrintInt, PrintString, PrintBool, Halt, NumBuiltIns } BuiltIn;
 
 class CodeGenerator {
+  public:
+    typedef std::unordered_map<Location*, std::list<Location*> > InterferenceGraph;
+    typedef Location* Reg_map[Mips::NumGeneralPurposeRegs];
+
   private:
     List<Instruction*> *code;
     int curStackOffset, curGlobalOffset;
@@ -37,8 +41,6 @@ class CodeGenerator {
     std::unordered_set<int> *succ; // store the successors for each tac
     std::vector<Location*> *in, *out, *kill; // IN, OUT, KILL set for each tac
 
-  public:
-    typedef std::unordered_map<Location*, std::list<Location*> > InterferenceGraph;
     /* Code optimization */
   private:
     void PopulateLabelTable(); 
@@ -50,6 +52,7 @@ class CodeGenerator {
                                                 int end_line);
     void _RegisterAlloc(InterferenceGraph *graph, int start_line,
                         int end_line);
+    void PopulateRegMap();
     void Optimise();
 
   public:

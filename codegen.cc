@@ -13,6 +13,42 @@
 #include "errors.h"
 
 
+void CodeGenerator::PopulateRegMap()
+{
+    int len = code->NumElements();
+    bool in_func = false;
+    int offset_t0 = static_cast<int>(Mips::t0);
+    for(int i = 0; i < len; i++) {
+        Instruction *ins = code->Nth(i);
+        if(in_func) {
+            if(ins->IsEndFunc()) {
+                in_func = false;
+            }else {
+                std::memcpy(ins->register_map, code->Nth(i-1)->register_map[i-1],
+                        sizeof(Reg_map));
+                Location *dst = ins->GetDst();
+                Location *src1 = ins->GetAccess1();
+                Location *src2 = ins->GetAccess2();
+                if(dst && !dst->GetRegister()) {
+                    int offset = static_cast<int>(dst->GetRegister()) - offset_t0;
+                    ins->register_map[offset] = dst;
+                }
+                if(src1 && !src1->GetRegister()) {
+                    int offset = static_cast<int>(src1->GetRegister()) - offset_t0;
+                    ins->register_map[offset] = src1;
+                }
+                if(src2 && !src2->GetRegister()) {
+                    int offset = static_cast<int>(src2->GetRegister()) - offset_t0;
+                    ins->register_map[offset] = src2;
+                }
+            }
+        }else if(ins->IsBeginFunc()) {
+            in_func = true;
+            std::memset(ins->register_map, NULL, sizeof(Reg_map));
+        }
+    }
+}
+
 void CodeGenerator::MarkSuccessor()
 {
     int len = code->NumElements();
@@ -243,7 +279,9 @@ void CodeGenerator::_RegisterAlloc(InterferenceGraph *graph,
         }
         // allocate register
         if(!tmp_reg.empty()) {
-            node->SetRegister(static_cast<Mips::Register>(*tmp_reg.begin())); // pick a free reg from regs left
+            // pick a free reg from regs left
+            node->SetRegister(static_cast<Mips::Register>(*tmp_reg.begin()));
+            regMap[*tmp_reg.begin()] = node;
         }//else spilled
         remove_list.erase(it);
     }
@@ -277,10 +315,11 @@ void CodeGenerator::Optimise()
     MarkSuccessor();
     LivenessAnalysis();
     GraphColoring();
+    PopulateRegMap();
 }
 
 CodeGenerator::CodeGenerator() :
-    labelTable(NULL), succ(NULL), in(NULL), out(NULL), kill(NULL)
+    labelTable(NULL), succ(NULL), in(NULL), out(NULL), kill(NULL), register_map(NULL)
 {
     code = new List<Instruction*>();
     curGlobalOffset = 0;

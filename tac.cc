@@ -63,11 +63,10 @@ Assign::Assign(Location *d, Location *s)
   Assert(dst != NULL && src != NULL);
   sprintf(printed, "%s = %s", dst->GetName(), src->GetName());
 }
+
 void Assign::EmitSpecific(Mips *mips) {
   mips->EmitCopy(dst, src);
 }
-
-
 
 Load::Load(Location *d, Location *s, int off)
   : dst(d), src(s), offset(off) {
@@ -77,11 +76,10 @@ Load::Load(Location *d, Location *s, int off)
   else
     sprintf(printed, "%s = *(%s)", dst->GetName(), src->GetName());
 }
+
 void Load::EmitSpecific(Mips *mips) {
   mips->EmitLoad(dst, src, offset);
 }
-
-
 
 Store::Store(Location *d, Location *s, int off)
   : dst(d), src(s), offset(off) {
@@ -96,12 +94,12 @@ void Store::EmitSpecific(Mips *mips) {
 }
 
  
-const char * const BinaryOp::opName[Mips::NumOps]  = {"+", "-", "*", "/", "%", "==", "<", "&&", "||"};;
+const char * const BinaryOp::opName[Mips::NumOps]  = {"+", "-", "*", "/", "%", "==", "<", "&&", "||"};
 
 Mips::OpCode BinaryOp::OpCodeForName(const char *name) {
-  for (int i = 0; i < Mips::NumOps; i++) 
+  for (int i = 0; i < Mips::NumOps; i++)
     if (opName[i] && !strcmp(opName[i], name))
-	return (Mips::OpCode)i;
+        return (Mips::OpCode)i;
   Failure("Unrecognized Tac operator: '%s'\n", name);
   return Mips::Add; // can't get here, but compiler doesn't know that
 }
@@ -112,25 +110,24 @@ BinaryOp::BinaryOp(Mips::OpCode c, Location *d, Location *o1, Location *o2)
   Assert(code >= 0 && code < Mips::NumOps);
   sprintf(printed, "%s = %s %s %s", dst->GetName(), op1->GetName(), opName[code], op2->GetName());
 }
-void BinaryOp::EmitSpecific(Mips *mips) {	  
+
+void BinaryOp::EmitSpecific(Mips *mips) {
   mips->EmitBinaryOp(code, dst, op1, op2);
 }
-
-
 
 Label::Label(const char *l) : label(strdup(l)) {
   Assert(label != NULL);
   *printed = '\0';
 }
+
 void Label::Print() {
   printf("%s:\n", label);
 }
+
 void Label::EmitSpecific(Mips *mips) {
   mips->EmitLabel(label);
 }
 
-
- 
 Goto::Goto(const char *l) : label(strdup(l)) {
   Assert(label != NULL);
   sprintf(printed, "Goto %s", label);
@@ -145,10 +142,10 @@ IfZ::IfZ(Location *te, const char *l)
   Assert(test != NULL && label != NULL);
   sprintf(printed, "IfZ %s Goto %s", test->GetName(), label);
 }
-void IfZ::EmitSpecific(Mips *mips) {	  
+
+void IfZ::EmitSpecific(Mips *mips) {
   mips->EmitIfZ(test, label);
 }
-
 
 
 BeginFunc::BeginFunc(FnDecl *fn) :
@@ -157,6 +154,7 @@ BeginFunc::BeginFunc(FnDecl *fn) :
   sprintf(printed,"BeginFunc (unassigned)");
   frameSize = -555; // used as sentinel to recognized unassigned value
 }
+
 void BeginFunc::SetFrameSize(int numBytesForAllLocalsAndTemps) {
   frameSize = numBytesForAllLocalsAndTemps; 
   sprintf(printed,"BeginFunc %d", frameSize);
@@ -221,35 +219,55 @@ void PopParams::EmitSpecific(Mips *mips) {
   mips->EmitPopParams(numBytes);
 }
 
-
-
-
 LCall::LCall(const char *l, Location *d)
   :  label(strdup(l)), dst(d) {
   sprintf(printed, "%s%sLCall %s", dst? dst->GetName(): "", dst?" = ":"", label);
 }
+
 void LCall::EmitSpecific(Mips *mips) {
   /* pp5: need to save registers before a function call
    * and restore them back after the call.
    */
+  // save
+  int offset_t0 = static_cast<int>(Mips::t0);
+  for(int i = 0; i<Mips::NumGeneralPurposeRegs; ++i) {
+    if(register_map[i] != NULL) {
+        mips->SpillRegister(register_map[i], static_cast<Mips::Register>(offset_t0+i));
+    }
+  }
   mips->EmitLCall(dst, label);
+  // restore
+  for(int i = 0; i<Mips::NumGeneralPurposeRegs; ++i) {
+    if(register_map[i] != NULL) {
+        mips->FillRegister(register_map[i], static_cast<Mips::Register>(offset_t0+i));
+    }
+  }
 }
-
 
 ACall::ACall(Location *ma, Location *d)
   : dst(d), methodAddr(ma) {
   Assert(methodAddr != NULL);
   sprintf(printed, "%s%sACall %s", dst? dst->GetName(): "", dst?" = ":"",
-	    methodAddr->GetName());
+          methodAddr->GetName());
 }
+
 void ACall::EmitSpecific(Mips *mips) {
   /* pp5: need to save registers before a function call
    * and restore them back after the call.
    */
+  int offset_t0 = static_cast<int>(Mips::t0);
+  for(int i = 0; i<Mips::NumGeneralPurposeRegs; ++i) {
+    if(register_map[i] != NULL) {
+        mips->SpillRegister(register_map[i], static_cast<Mips::Register>(offset_t0+i));
+    }
+  }
   mips->EmitACall(dst, methodAddr);
-} 
-
-
+  for(int i = 0; i<Mips::NumGeneralPurposeRegs; ++i) {
+    if(register_map[i] != NULL) {
+        mips->FillRegister(register_map[i], static_cast<Mips::Register>(offset_t0+i));
+    }
+  }
+}
 
 VTable::VTable(const char *l, List<const char *> *m)
   : methodLabels(m), label(strdup(l)) {
@@ -263,8 +281,7 @@ void VTable::Print() {
     printf("\t%s,\n", methodLabels->Nth(i));
   printf("; \n"); 
 }
+
 void VTable::EmitSpecific(Mips *mips) {
   mips->EmitVTable(label, methodLabels);
 }
-
-

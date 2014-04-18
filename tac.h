@@ -79,6 +79,7 @@ class Instruction {
         char printed[128];
 
     public:
+        CodeGenerator::Reg_map register_map;
         virtual void Print();
         virtual void EmitSpecific(Mips *mips) = 0;
         virtual void Emit(Mips *mips);
@@ -136,7 +137,7 @@ class LoadStringConstant: public Instruction {
     void EmitSpecific(Mips *mips);
     Location *GetDst() const { return dst; }
 };
-    
+
 class LoadLabel: public Instruction {
     Location *dst;
     const char *label;
@@ -261,7 +262,7 @@ class PopParams: public Instruction {
   public:
     PopParams(int numBytesOfParamsToRemove);
     void EmitSpecific(Mips *mips);
-}; 
+};
 
 class LCall: public Instruction {
     const char *label;
