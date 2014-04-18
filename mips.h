@@ -44,9 +44,6 @@ class Mips {
 
     typedef enum { ForRead, ForWrite } Reason;
     
-    void FillRegister(Location *src, Register reg);
-    void SpillRegister(Location *dst, Register reg);
-
     void EmitCallInstr(Location *dst, const char *fn, bool isL);
     
     static const char *mipsName[NumOps];
@@ -55,6 +52,9 @@ class Mips {
   public:
     
     Mips();
+
+    void FillRegister(Location *src, Register reg);
+    void SpillRegister(Location *dst, Register reg);
 
     static void Emit(const char *fmt, ...);
     

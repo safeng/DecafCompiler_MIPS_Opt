@@ -3,6 +3,7 @@
  * Implementation of Location class and Instruction class/subclasses.
  */
   
+#include "ast_decl.h"
 #include "tac.h"
 #include "mips.h"
 #include <string.h>
@@ -150,7 +151,9 @@ void IfZ::EmitSpecific(Mips *mips) {
 
 
 
-BeginFunc::BeginFunc() {
+BeginFunc::BeginFunc(FnDecl *fn) :
+    func(fn)
+{
   sprintf(printed,"BeginFunc (unassigned)");
   frameSize = -555; // used as sentinel to recognized unassigned value
 }
@@ -158,10 +161,26 @@ void BeginFunc::SetFrameSize(int numBytesForAllLocalsAndTemps) {
   frameSize = numBytesForAllLocalsAndTemps; 
   sprintf(printed,"BeginFunc %d", frameSize);
 }
-void BeginFunc::EmitSpecific(Mips *mips) {
-  mips->EmitBeginFunction(frameSize);
-  /* pp5: need to load all parameters to the allocated registers.
-   */
+
+void BeginFunc::EmitSpecific(Mips *mips)
+{
+    mips->EmitBeginFunction(frameSize);
+
+    List<VarDecl*> *args = func->GetFormals();
+    for (int i = 0; i < args->NumElements(); i++) {
+        Location *arg_loc = args->Nth(i)->rtLoc;
+        Mips::Register arg_reg = arg_loc->GetRegister();
+        if (arg_reg != Mips::zero) {
+            mips->FillRegister(arg_loc, arg_reg);
+        }
+    }
+    if (func->IsMethodDecl()) {
+        Location *classref = func->GetClassRef();
+        Mips::Register classreg = classref->GetRegister();
+        if (classreg != Mips::zero) {
+            mips->FillRegister(classref, classreg);
+        }
+    }
 }
 
 

@@ -405,7 +405,7 @@ void CodeGenerator::GenReturn(Location *val)
 BeginFunc *CodeGenerator::GenBeginFunc(FnDecl *fn)
 {
     List<VarDecl*> *formals = fn->GetFormals();
-    BeginFunc *result = new BeginFunc();
+    BeginFunc *result = new BeginFunc(fn);
     code->Append(insideFn = result);
     int start = OffsetToFirstParam;
     if (fn->IsMethodDecl()) start += VarSize;
