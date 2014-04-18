@@ -36,7 +36,6 @@ class CodeGenerator {
     Hashtable<int> *labelTable; // index in tac list for each label
     std::unordered_set<int> *succ; // store the successors for each tac
     std::vector<Location*> *in, *out, *kill; // IN, OUT, KILL set for each tac
-    bool freeList[Mips::NumGeneralPurposeRegs];
 
   public:
     typedef std::unordered_map<Location*, std::list<Location*> > InterferenceGraph;
@@ -50,7 +49,6 @@ class CodeGenerator {
     InterferenceGraph * _BuildInterferenceGraph(InterferenceGraph *graph, 
             int start_line, int end_line);
     void _RegisterAlloc(int start_line, int end_line);
-    inline bool FindFreeReg(Mips::Register &reg);
     void Optimise();
 
   public:
@@ -203,17 +201,5 @@ class CodeGenerator {
     Location *GenMethodCall(Location*rcvr, Location*meth, List<Location*> *args, bool hasReturnValue);
     void GenHaltWithMessage(const char *msg);
 };
-
-inline bool CodeGenerator::FindFreeReg(Mips::Register &reg)
-{
-    for(int i = 0; i < Mips::NumGeneralPurposeRegs; ++i) {
-        if(freeList[i] == false) {
-            reg = static_cast<Mips::Register>(Mips::t0 + i);
-            freeList[i] = true;
-            return true;
-        }
-    }
-    return false;
-}
 
 #endif

@@ -162,7 +162,7 @@ CodeGenerator::InterferenceGraph* CodeGenerator::
                 if(it == graph->end()) {
                     std::list<Location *> neigh = {inter_set[k]};
                     graph->insert(std::make_pair(inter_set[j], neigh));
-                }else 
+                }else
                 {
                     it->second.push_back(inter_set[k]);
                 }
@@ -179,16 +179,77 @@ CodeGenerator::InterferenceGraph* CodeGenerator::
     return graph;
 }
 
-void CodeGenerator::_RegisterAlloc(InterferenceGraph *graph, 
+void CodeGenerator::_RegisterAlloc(InterferenceGraph *graph,
         int start_line, int end_line)
 {
-    std::unordered_set<Location *> remove_list;
+    std::unordered_map<Location *, std::list<Location*> > remove_list;
     std::stack<Location *> node_stk;
+    int k = Mips::NumGeneralPurposeRegs;
+    while(graph->size() > 0)
+    {
+        auto max_edge_var = graph->end();
+        int max_edge = 0;
+        auto it = graph->begin();
+        for(; it != graph->end(); ++it) {
+            int effective_size = 0; // number of edges not removed
+            for(auto it_lst = it->second->begin(); it_list != it->second->end();
+                    ++it_lst) {
+                if(remove_list.find(*it_lst) == remove_list.end()) {
+                    effective_size++;
+                }
+            }
+            if(effective_size < k) {
+                break;
+            }else {
+                if(effective_size > max_edge) {
+                    max_edge_var = it;
+                    max_edge = effective_size;
+                }
+            }
+        }
+        Location *node_to_remove = NULL;
+        if(it != graph->end()) {
+            node_to_remove = it->first;
+        }else {
+            node_to_remove = max_edge_var->first;
+        }
+        // push the node to stack and remove all relevant edges
+        remove_list.insert(std::make_pair(node_to_remove->first, node_to_remove->second));
+        node_stk.push(node_to_remove->first);
+        graph->erase(node_to_remove);
+    }
+
+    // in the order of the stack add nodes and edges back
+    std::unordered_set<Mips::Register> gen_reg_set;
+    for(int i = 0; i<k; ++i) {
+        gen_reg_set.insert(static_cast<Mips::Register>(Mips::t0+i));
+    }
+    while(!node_stk.empty()) {
+        Location *node = node_stk.top();
+        node_stk.pop();
+        auto it = remove_list.find(node);
+        Assert(it != remove_list.end());
+        graph->insert(std::make_pair(node, it->second));
+        // find a reg that is not used by the current neighbors that are
+        // allocated with registers
+        std::unordered_set<Mips::Register> tmp_reg(gen_reg_set);
+        for(auto it_lst = it->second.begin(); it_lst!=it->second.end(); ++it_lst) {
+            auto it_neigh = graph->find(*it_lst);
+            if(it_neigh != graph->end() && it_neigh->first->GetRegister()) {
+                Mips::Register reg = it_neigh->first->GetRegister();
+                tmp_reg.erase(tmp_reg.find(reg));
+            }
+        }
+        // allocate register
+        if(!tmp_reg.empty()) {
+            node->SetRegister(tmp_reg.begin()); // pick a free reg from regs left
+        }//else spilled
+        remove_list.erase(it);
+    }
 }
 
 void CodeGenerator::GraphColoring()
 {
-    std::memset(freeList, false, sizeof(freeList));
     bool in_func = false;
     int start_line = 0, end_line = 0;
     /* locate a function and do liveness analysis inside each function */

@@ -49,7 +49,7 @@ class Location
     // A "zero" indicates that no register has been allocated.
     Mips::Register reg;
 
-	  
+
   public:
     Location(Segment seg, int offset, const char *name);
 
@@ -66,7 +66,7 @@ class Location
     Location *GetReference()        { return reference; }
     int GetRefOffset()              { return refOffset; }
 };
- 
+
 
 
   // base class from which all Tac instructions derived
