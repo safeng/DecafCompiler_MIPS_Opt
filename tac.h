@@ -210,7 +210,7 @@ class Goto: public Instruction {
     const char *GetLabel() { return label; }
 
     void EmitSpecific(Mips *mips);
-    virtual bool IsGoto()       { return true; }
+    virtual bool IsGoto() const   { return true; }
 };
 
 class IfZ: public Instruction {
@@ -221,7 +221,7 @@ class IfZ: public Instruction {
     const char *GetLabel() { return label; }
 
     void EmitSpecific(Mips *mips);
-    virtual bool IsIfz()        { return true; }
+    virtual bool IsIfz() const { return true; }
     virtual Location *GetAccess1() const  { return test; }
 };
 
@@ -233,14 +233,14 @@ class BeginFunc: public Instruction {
     // used to backpatch the instruction with frame size once known
     void SetFrameSize(int numBytesForAllLocalsAndTemps);
     void EmitSpecific(Mips *mips);
-    virtual bool IsBeginFunc()  { return true; }
+    virtual bool IsBeginFunc() const  { return true; }
 };
 
 class EndFunc: public Instruction {
   public:
     EndFunc();
     void EmitSpecific(Mips *mips);
-    virtual bool IsEndFunc()    { return true; }
+    virtual bool IsEndFunc() const { return true; }
 };
 
 class Return: public Instruction {
