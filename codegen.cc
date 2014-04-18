@@ -24,7 +24,7 @@ void CodeGenerator::PopulateRegMap()
             if(ins->IsEndFunc()) {
                 in_func = false;
             }else {
-                std::memcpy(ins->register_map, code->Nth(i-1)->register_map[i-1],
+                std::memcpy(ins->register_map, code->Nth(i-1)->register_map,
                         sizeof(Reg_map));
                 Location *dst = ins->GetDst();
                 Location *src1 = ins->GetAccess1();
@@ -44,7 +44,25 @@ void CodeGenerator::PopulateRegMap()
             }
         }else if(ins->IsBeginFunc()) {
             in_func = true;
-            std::memset(ins->register_map, NULL, sizeof(Reg_map));
+            FnDecl *func = dynamic_cast<BeginFunc*>(ins)->func;
+            List<VarDecl*> *args = func->GetFormals();
+            for (int i = 0; i < args->NumElements(); i++) {
+                Location *arg_loc = args->Nth(i)->rtLoc;
+                Mips::Register arg_reg = arg_loc->GetRegister();
+                if (arg_reg != Mips::zero) {
+                    int offset = static_cast<int>(arg_loc->GetRegister()) - offset_t0;
+                    ins->register_map[offset] = arg_loc;
+                }
+            }
+            if (func->IsMethodDecl()) {
+                Location *classref = func->GetClassRef();
+                Mips::Register classreg = classref->GetRegister();
+                if (classreg != Mips::zero) {
+                    int offset = static_cast<int>(classref->GetRegister()) - offset_t0;
+                    ins->register_map[offset] = classref;
+                }
+            }
+
         }
     }
 }
@@ -281,7 +299,6 @@ void CodeGenerator::_RegisterAlloc(InterferenceGraph *graph,
         if(!tmp_reg.empty()) {
             // pick a free reg from regs left
             node->SetRegister(static_cast<Mips::Register>(*tmp_reg.begin()));
-            regMap[*tmp_reg.begin()] = node;
         }//else spilled
         remove_list.erase(it);
     }
@@ -319,7 +336,7 @@ void CodeGenerator::Optimise()
 }
 
 CodeGenerator::CodeGenerator() :
-    labelTable(NULL), succ(NULL), in(NULL), out(NULL), kill(NULL), register_map(NULL)
+    labelTable(NULL), succ(NULL), in(NULL), out(NULL), kill(NULL)
 {
     code = new List<Instruction*>();
     curGlobalOffset = 0;

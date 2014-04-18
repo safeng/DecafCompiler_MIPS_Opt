@@ -38,6 +38,8 @@ class FnDecl;
 
 typedef enum {fpRelative, gpRelative} Segment;
 
+typedef Location* Reg_map[Mips::NumGeneralPurposeRegs];
+
 class Location
 {
   protected:
@@ -79,7 +81,7 @@ class Instruction {
         char printed[128];
 
     public:
-        CodeGenerator::Reg_map register_map;
+        Reg_map register_map;
         virtual void Print();
         virtual void EmitSpecific(Mips *mips) = 0;
         virtual void Emit(Mips *mips);
@@ -225,8 +227,8 @@ class IfZ: public Instruction {
 
 class BeginFunc: public Instruction {
     int frameSize;
-    FnDecl *func;
   public:
+    FnDecl *func;
     BeginFunc(FnDecl *fn);
     // used to backpatch the instruction with frame size once known
     void SetFrameSize(int numBytesForAllLocalsAndTemps);

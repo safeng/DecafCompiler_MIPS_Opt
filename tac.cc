@@ -179,7 +179,7 @@ void BeginFunc::EmitSpecific(Mips *mips)
             mips->FillRegister(classref, classreg);
         }
     }
-
+}
 
 EndFunc::EndFunc() : Instruction() {
   sprintf(printed, "EndFunc");

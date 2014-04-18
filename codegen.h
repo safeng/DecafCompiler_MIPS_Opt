@@ -31,7 +31,6 @@ typedef enum { Alloc, ReadLine, ReadInteger, StringEqual,
 class CodeGenerator {
   public:
     typedef std::unordered_map<Location*, std::list<Location*> > InterferenceGraph;
-    typedef Location* Reg_map[Mips::NumGeneralPurposeRegs];
 
   private:
     List<Instruction*> *code;
