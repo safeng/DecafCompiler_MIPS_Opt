@@ -14,10 +14,10 @@
 #include "tac.h"
 
 #include <vector>
+#include <list>
 #include <unordered_set>
 #include <unordered_map>
 #include <algorithm>
-#include <pair>
 #include <cstring>
 #include <stack>
 
@@ -46,9 +46,10 @@ class CodeGenerator {
     void LivenessAnalysis();
     void _LivenessAnalysis(int start_line, int end_line);
     void GraphColoring();
-    InterferenceGraph * _BuildInterferenceGraph(InterferenceGraph *graph, 
-            int start_line, int end_line);
-    void _RegisterAlloc(int start_line, int end_line);
+    InterferenceGraph * _BuildInterferenceGraph(int start_line,
+                                                int end_line);
+    void _RegisterAlloc(InterferenceGraph *graph, int start_line,
+                        int end_line);
     void Optimise();
 
   public:
@@ -171,7 +172,7 @@ class CodeGenerator {
 
          // These methods generate the Tac instructions that mark the start
          // and end of a function/method definition. 
-    BeginFunc *GenBeginFunc(FnDecl *fn, int narg);
+    BeginFunc *GenBeginFunc(FnDecl *fn);
     void GenEndFunc();
 
     

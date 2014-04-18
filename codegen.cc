@@ -50,7 +50,7 @@ static void Set_Union(std::vector<Location *> &set1, std::vector<Location *> &se
 {
     result.clear();
     result.resize(set1.size()+set2.size());
-    vector<Location*>::iterator it;
+    std::vector<Location*>::iterator it;
     it = std::set_union(set1.begin(), set1.end(), set2.begin(), set2.end(),
             result.begin());
     result.resize(it-result.begin());
@@ -61,7 +61,7 @@ static void Set_Diff(std::vector<Location *> &set1, std::vector<Location *> &set
 {
     result.clear();
     result.resize(set1.size());
-    vector<Location *>::iterator it;
+    std::vector<Location *>::iterator it;
     it = std::set_difference(set1.begin(), set1.end(), set2.begin(), set2.end(),
             result.begin());
     result.resize(it-result.begin());
@@ -132,13 +132,13 @@ void CodeGenerator::LivenessAnalysis()
     for(int i = 0; i < len; ++i) {
         Instruction *ins = code->Nth(i);
         if(in_func) {
-            if (line->IsEndFunc()) {
+            if (ins->IsEndFunc()) {
                 in_func = false;
                 end_line = i;
                 // liveness analysis for one function
                 _LivenessAnalysis(start_line, end_line);
             }
-        }else if(line->IsBeginFunc()) {
+        }else if(ins->IsBeginFunc()) {
             in_func = true;
             start_line = i;
         }
@@ -192,7 +192,7 @@ void CodeGenerator::_RegisterAlloc(InterferenceGraph *graph,
         auto it = graph->begin();
         for(; it != graph->end(); ++it) {
             int effective_size = 0; // number of edges not removed
-            for(auto it_lst = it->second->begin(); it_list != it->second->end();
+            for (auto it_lst = it->second.begin(); it_lst != it->second.end();
                     ++it_lst) {
                 if(remove_list.find(*it_lst) == remove_list.end()) {
                     effective_size++;
@@ -207,11 +207,11 @@ void CodeGenerator::_RegisterAlloc(InterferenceGraph *graph,
                 }
             }
         }
-        Location *node_to_remove = NULL;
-        if(it != graph->end()) {
-            node_to_remove = it->first;
+        auto node_to_remove = graph->end();
+        if (it != node_to_remove) {
+            node_to_remove = it;
         }else {
-            node_to_remove = max_edge_var->first;
+            node_to_remove = max_edge_var;
         }
         // push the node to stack and remove all relevant edges
         remove_list.insert(std::make_pair(node_to_remove->first, node_to_remove->second));
@@ -253,10 +253,10 @@ void CodeGenerator::GraphColoring()
     bool in_func = false;
     int start_line = 0, end_line = 0;
     /* locate a function and do liveness analysis inside each function */
-    for(int i = 0; i < len; ++i) {
+    for(int i = 0; i < code->NumElements(); ++i) {
         Instruction *ins = code->Nth(i);
         if(in_func) {
-            if (line->IsEndFunc()) {
+            if (ins->IsEndFunc()) {
                 in_func = false;
                 end_line = i;
                 InterferenceGraph *graph = 
@@ -264,7 +264,7 @@ void CodeGenerator::GraphColoring()
                 _RegisterAlloc(graph, start_line, end_line);
                 delete graph;
             }
-        }else if(line->IsBeginFunc()) {
+        }else if(ins->IsBeginFunc()) {
             in_func = true;
             start_line = i;
         }
@@ -402,7 +402,7 @@ void CodeGenerator::GenReturn(Location *val)
 }
 
 
-BeginFunc *CodeGenerator::GenBeginFunc(FnDecl *fn, int narg)
+BeginFunc *CodeGenerator::GenBeginFunc(FnDecl *fn)
 {
     List<VarDecl*> *formals = fn->GetFormals();
     BeginFunc *result = new BeginFunc(formals->NumElements());
