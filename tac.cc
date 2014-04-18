@@ -12,7 +12,7 @@
 Location::Location(Segment s, int o, const char *name) :
   variableName(strdup(name)), segment(s), offset(o), reg(Mips::zero) {}
 
- 
+
 void Instruction::Print() {
   printf("\t%s ;", printed);
   printf("\n");
@@ -181,7 +181,6 @@ void BeginFunc::EmitSpecific(Mips *mips)
             mips->FillRegister(classref, classreg);
         }
     }
-}
 
 
 EndFunc::EndFunc() : Instruction() {
@@ -196,7 +195,8 @@ void EndFunc::EmitSpecific(Mips *mips) {
 Return::Return(Location *v) : val(v) {
   sprintf(printed, "Return %s", val? val->GetName() : "");
 }
-void Return::EmitSpecific(Mips *mips) {	  
+
+void Return::EmitSpecific(Mips *mips) {
   mips->EmitReturn(val);
 }
 
@@ -209,16 +209,17 @@ PushParam::PushParam(Location *p)
 }
 void PushParam::EmitSpecific(Mips *mips) {
   mips->EmitParam(param);
-} 
+}
 
 
 PopParams::PopParams(int nb)
   :  numBytes(nb) {
   sprintf(printed, "PopParams %d", numBytes);
 }
+
 void PopParams::EmitSpecific(Mips *mips) {
   mips->EmitPopParams(numBytes);
-} 
+}
 
 
 

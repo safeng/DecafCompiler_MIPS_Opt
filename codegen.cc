@@ -207,6 +207,7 @@ void CodeGenerator::_RegisterAlloc(InterferenceGraph *graph,
                 }
             }
         }
+
         auto node_to_remove = graph->end();
         if (it != node_to_remove) {
             node_to_remove = it;

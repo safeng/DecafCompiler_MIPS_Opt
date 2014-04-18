@@ -113,14 +113,14 @@ class CodeGenerator {
          // negative number of bytes. If not given, 0 is assumed.
     Location *GenLoad(Location *addr, int offset = 0);
 
-    
+
          // Generates Tac instructions to perform one of the binary ops
          // identified by string name, such as "+" or "==".  Returns a
          // Location object for the new temporary where the result
          // was stored.
     Location *GenBinaryOp(const char *opName, Location *op1, Location *op2);
 
-    
+
          // Generates the Tac instruction for pushing a single
          // parameter. Used to set up for ACall and LCall instructions.
          // The Decaf convention is that parameters are pushed right
@@ -158,7 +158,7 @@ class CodeGenerator {
          // is created and NULL is returned.
     Location *GenBuiltInCall(BuiltIn b, Location *arg1 = NULL, Location *arg2 = NULL);
 
-    
+
          // These methods generate the Tac instructions for various
          // control flow (branches, jumps, returns, labels)
          // One minor detail to mention is that you can pass NULL
@@ -175,7 +175,7 @@ class CodeGenerator {
     BeginFunc *GenBeginFunc(FnDecl *fn);
     void GenEndFunc();
 
-    
+
          // Generates the Tac instructions for defining vtable for a
          // The methods parameter is expected to contain the vtable
          // methods in the order they should be laid out.  The vtable

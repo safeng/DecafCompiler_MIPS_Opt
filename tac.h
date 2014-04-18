@@ -35,7 +35,7 @@ class FnDecl;
     // For example, a declaration for integer num as the first local
     // variable in a function would be assigned a Location object
     // with name "num", segment fpRelative, and offset -8. 
- 
+
 typedef enum {fpRelative, gpRelative} Segment;
 
 class Location
@@ -56,8 +56,8 @@ class Location
     Location(Segment seg, int offset, const char *name);
 
     Location(Location *base, int refOff) :
-	variableName(base->variableName), segment(base->segment),
-	offset(base->offset), reference(base), refOffset(refOff) {}
+    variableName(base->variableName), segment(base->segment),
+    offset(base->offset), reference(base), refOffset(refOff) {}
 
     const char *GetName()           { return variableName; }
     Segment GetSegment()            { return segment; }
@@ -73,15 +73,15 @@ class Location
 
   // base class from which all Tac instructions derived
   // has the interface for the 2 polymorphic messages: Print & Emit
-  
+
 class Instruction {
     protected:
         char printed[128];
-	  
+
     public:
-	virtual void Print();
-	virtual void EmitSpecific(Mips *mips) = 0;
-	virtual void Emit(Mips *mips);
+        virtual void Print();
+        virtual void EmitSpecific(Mips *mips) = 0;
+        virtual void Emit(Mips *mips);
 
         virtual bool IsBeginFunc() const  { return false; }
         virtual bool IsEndFunc()   const  { return false; }
@@ -92,11 +92,11 @@ class Instruction {
         virtual Location *GetAccess2() const  { return NULL; }
 };
 
-  
-  
+
+
   // for convenience, the instruction classes are listed here.
   // the interfaces for the classes follows below
-  
+
   class LoadConstant;
   class LoadStringConstant;
   class LoadLabel;
