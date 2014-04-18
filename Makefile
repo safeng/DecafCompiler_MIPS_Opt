@@ -15,6 +15,7 @@ LD_RUN_PATH := /usr/um/gcc-4.7.0/lib64
 COMPILER = dcc
 PRODUCTS = $(COMPILER) 
 default: $(PRODUCTS)
+	paxctl-ng -m $(COMPILER) || true
 
 # Set up the list of source and object files
 SRCS = ast.cc ast_decl.cc ast_expr.cc ast_stmt.cc ast_type.cc scope.cc \

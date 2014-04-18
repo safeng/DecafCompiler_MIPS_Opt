@@ -6,6 +6,7 @@ cd $(git rev-parse --show-toplevel)
 make clean
 if make
 then
+    echo -e "\e[32mBuild succeed\e[0m"
     for SRC in samples/*.decaf
     do
         BASE=${SRC%.decaf}
