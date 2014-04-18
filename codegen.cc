@@ -234,8 +234,9 @@ void CodeGenerator::_RegisterAlloc(InterferenceGraph *graph,
     }
 
     // in the order of the stack add nodes and edges back
+    int t0 = static_cast<int>(Mips::t0);
     std::unordered_set<int> gen_reg_set;
-    for(int i = 0; i<k; ++i) {
+    for(int i = t0; i<k; ++i) {
         gen_reg_set.insert(i);
     }
     while(!node_stk.empty()) {
@@ -251,7 +252,7 @@ void CodeGenerator::_RegisterAlloc(InterferenceGraph *graph,
             auto it_neigh = graph->find(*it_lst);
             if(it_neigh != graph->end() && it_neigh->first->GetRegister()) {
                 Mips::Register reg = it_neigh->first->GetRegister();
-                tmp_reg.erase(tmp_reg.find(static_cast<int>(reg) - static_cast<int>(Mips::t0)));
+                tmp_reg.erase(tmp_reg.find(static_cast<int>(reg)));
             }
         }
         // allocate register
