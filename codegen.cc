@@ -220,9 +220,9 @@ void CodeGenerator::_RegisterAlloc(InterferenceGraph *graph,
     }
 
     // in the order of the stack add nodes and edges back
-    std::unordered_set<Mips::Register> gen_reg_set;
+    std::unordered_set<int> gen_reg_set;
     for(int i = 0; i<k; ++i) {
-        gen_reg_set.insert(static_cast<Mips::Register>(Mips::t0+i));
+        gen_reg_set.insert(i);
     }
     while(!node_stk.empty()) {
         Location *node = node_stk.top();
@@ -232,17 +232,17 @@ void CodeGenerator::_RegisterAlloc(InterferenceGraph *graph,
         graph->insert(std::make_pair(node, it->second));
         // find a reg that is not used by the current neighbors that are
         // allocated with registers
-        std::unordered_set<Mips::Register> tmp_reg(gen_reg_set);
+        std::unordered_set<int> tmp_reg(gen_reg_set);
         for(auto it_lst = it->second.begin(); it_lst!=it->second.end(); ++it_lst) {
             auto it_neigh = graph->find(*it_lst);
             if(it_neigh != graph->end() && it_neigh->first->GetRegister()) {
                 Mips::Register reg = it_neigh->first->GetRegister();
-                tmp_reg.erase(tmp_reg.find(reg));
+                tmp_reg.erase(tmp_reg.find(static_cast<int>(reg) - static_cast<int>(Mips::t0)));
             }
         }
         // allocate register
         if(!tmp_reg.empty()) {
-            node->SetRegister(tmp_reg.begin()); // pick a free reg from regs left
+            node->SetRegister(static_cast<Mips::Register>(*tmp_reg.begin())); // pick a free reg from regs left
         }//else spilled
         remove_list.erase(it);
     }
@@ -405,7 +405,7 @@ void CodeGenerator::GenReturn(Location *val)
 BeginFunc *CodeGenerator::GenBeginFunc(FnDecl *fn)
 {
     List<VarDecl*> *formals = fn->GetFormals();
-    BeginFunc *result = new BeginFunc(formals->NumElements());
+    BeginFunc *result = new BeginFunc();
     code->Append(insideFn = result);
     int start = OffsetToFirstParam;
     if (fn->IsMethodDecl()) start += VarSize;
