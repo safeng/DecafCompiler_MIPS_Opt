@@ -193,7 +193,10 @@ bool InterfaceDecl::ClassMeetsObligation(ClassDecl *c) {
     return true;
 }
 	
-FnDecl::FnDecl(Identifier *n, Type *r, List<VarDecl*> *d) : Decl(n) {
+FnDecl::FnDecl(Identifier *n, Type *r, List<VarDecl*> *d) :
+    Decl(n),
+    classref(NULL)
+{
     Assert(n != NULL && r!= NULL && d != NULL);
     (returnType=r)->SetParent(this);
     (formals=d)->SetParentAll(this);
@@ -283,4 +286,12 @@ const char *FnDecl::GetFunctionLabel()
 	return id->GetName();
 }
 
-
+Location *FnDecl::GetClassRef()
+{
+    if (classref == NULL) {
+        if (IsMethodDecl()) {
+            classref = new Location(fpRelative, 4, "this");
+        }
+    }
+    return classref;
+}

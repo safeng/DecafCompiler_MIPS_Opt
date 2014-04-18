@@ -9,6 +9,7 @@
 #include <stdio.h>  // printf
 #include "errors.h"
 #include "scope.h"
+#include "codegen.h"
 
 Node::Node(yyltype loc) {
     location = new yyltype(loc);
@@ -30,6 +31,15 @@ Decl *Node::FindDecl(Identifier *idToFind, lookup l) {
     if (l == kDeep && parent)
         return parent->FindDecl(idToFind, l);
     return NULL;
+}
+
+Location *Node::GetClassRef()
+{
+    if (parent == NULL) {
+        return NULL;
+    } else {
+        return parent->GetClassRef();
+    }
 }
 	 
 Identifier::Identifier(yyltype loc, const char *n) : Node(loc) {

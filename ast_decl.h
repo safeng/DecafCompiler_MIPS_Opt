@@ -108,7 +108,8 @@ class FnDecl : public Decl
     List<VarDecl*> *formals;
     Type *returnType;
     Stmt *body;
-    
+    Location *classref;
+
   public:
     FnDecl(Identifier *name, Type *returnType, List<VarDecl*> *formals);
     void SetFunctionBody(Stmt *b);
@@ -122,6 +123,7 @@ class FnDecl : public Decl
     List<VarDecl*> *GetFormals() { return formals; }
     const char *GetFunctionLabel();
     void Emit(CodeGenerator *cg);
+    Location *GetClassRef();
 };
 
 #endif

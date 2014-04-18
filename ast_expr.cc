@@ -212,11 +212,9 @@ Type* This::CheckAndComputeResultType() {
    return enclosingClass->GetDeclaredType();
  }
 
-static Location *ThisLocation = new Location(fpRelative, 4, "this");
-
 void This::Emit(CodeGenerator *cg) {
     if (!result)
-        result = ThisLocation;
+        result = GetClassRef();
 }
  
 ArrayAccess::ArrayAccess(yyltype loc, Expr *b, Expr *s) : LValue(loc) {

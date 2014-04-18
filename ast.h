@@ -32,6 +32,7 @@ class Decl;
 class Identifier;
 class Type;
 class CodeGenerator;
+class Location;
 
 class Node 
 {
@@ -52,6 +53,7 @@ class Node
     typedef enum { kShallow, kDeep } lookup;
     virtual Decl *FindDecl(Identifier *id, lookup l = kDeep);
     virtual Scope *PrepareScope() { return NULL; }
+    virtual Location *GetClassRef();
     template <class Specific> Specific *FindSpecificParent() {
         Node *p = parent;
         while (p) {
