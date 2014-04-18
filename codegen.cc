@@ -94,7 +94,7 @@ void CodeGenerator::_LivenessAnalysis(int start_line, int end_line)
 {
     bool changed = true;
     while(changed) {
-        changed = true;
+        changed = false;
         // OUT[tac]=Union(IN[SUCC(tac)])
         for(int i = start_line; i <= end_line; ++i) {
             std::vector<Location*> tmp, tmp_res; 
@@ -252,7 +252,10 @@ void CodeGenerator::_RegisterAlloc(InterferenceGraph *graph,
             auto it_neigh = graph->find(*it_lst);
             if(it_neigh != graph->end() && it_neigh->first->GetRegister()) {
                 Mips::Register reg = it_neigh->first->GetRegister();
-                tmp_reg.erase(tmp_reg.find(static_cast<int>(reg)));
+                auto it_reg = tmp_reg.find(static_cast<int>(reg));
+                if(it_reg != tmp_reg.end()) {
+                    tmp_reg.erase(it_reg);
+                }
             }
         }
         // allocate register
