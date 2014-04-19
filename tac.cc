@@ -9,10 +9,13 @@
 #include <string.h>
 #include <deque>
 
+static int OFFSET = static_cast<int>(Mips::t0);
+
 Location::Location(Segment s, int o, const char *name):
     variableName(strdup(name)),
     segment(s),
     offset(o),
+    assigned(false),
     reg(Mips::zero)
 {}
 
@@ -22,6 +25,7 @@ Location::Location(Location *base, int refOff):
     offset(base->offset),
     reference(base),
     refOffset(refOff),
+    assigned(false),
     reg(Mips::zero)
 {}
 
@@ -203,19 +207,11 @@ void BeginFunc::EmitSpecific(Mips *mips)
 {
     mips->EmitBeginFunction(frameSize);
 
-    List<VarDecl*> *args = func->GetFormals();
-    for (int i = 0; i < args->NumElements(); i++) {
-        Location *arg_loc = args->Nth(i)->rtLoc;
-        Mips::Register arg_reg = arg_loc->GetRegister();
-        if (arg_reg != Mips::zero) {
-            mips->FillRegister(arg_loc, arg_reg);
-        }
-    }
-    if (func->IsMethodDecl()) {
-        Location *classref = func->GetClassRef();
-        Mips::Register classreg = classref->GetRegister();
-        if (classreg != Mips::zero) {
-            mips->FillRegister(classref, classreg);
+    for (int i = 0; i<Mips::NumGeneralPurposeRegs; i++) {
+        if (register_map[i] != NULL) {
+            int reg = i + OFFSET;
+            mips->FillRegister(register_map[i],
+                               static_cast<Mips::Register>(reg));
         }
     }
 }
@@ -261,8 +257,6 @@ void PopParams::EmitSpecific(Mips *mips)
 {
     mips->EmitPopParams(numBytes);
 }
-
-static int OFFSET = static_cast<int>(Mips::t0);
 
 LCall::LCall(const char *l, Location *d):
     label(strdup(l)),

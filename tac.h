@@ -48,6 +48,8 @@ class Location
         Location *reference;
         int refOffset;
 
+        bool assigned;
+
         // The register allocated to this location.
         // A "zero" indicates that no register has been allocated.
         Mips::Register reg;
@@ -60,7 +62,11 @@ class Location
         const char *GetName() { return variableName; }
         Segment GetSegment() { return segment; }
         int GetOffset() { return offset; }
-        void SetRegister(Mips::Register r) { reg = r; }
+        void SetRegister(Mips::Register r)
+        {
+            if (!assigned) reg = r;
+            assigned = true;
+        }
         Mips::Register GetRegister() { return reg; }
         bool IsReference() { return reference != NULL; }
         Location *GetReference() { return reference; }
@@ -142,6 +148,7 @@ class LoadLabel: public Instruction {
     public:
     LoadLabel(Location *dst, const char *label);
     void EmitSpecific(Mips *mips);
+    Location *GetDst() const { return dst; }
 };
 
 class Assign: public Instruction {
@@ -171,6 +178,7 @@ class Store: public Instruction {
     void EmitSpecific(Mips *mips);
     virtual Location *GetAccess1() const  { return src; }
     virtual Location *GetAccess2() const  { return dst; }
+    virtual Location *GetDst() const  { return dst; }
 };
 
 class BinaryOp: public Instruction {

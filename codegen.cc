@@ -102,6 +102,7 @@ void CodeGenerator::FuncLivenessAnalysis(int start, int end)
 
             // IN' = OUT - KILL + GEN
             std::vector<Location*> tmp_in;
+            std::vector<Location*> gen;
             Instruction *ins = code->Nth(i);
             if (kill[i].empty()) {
                 Location *dst = ins->GetDst();
@@ -109,7 +110,6 @@ void CodeGenerator::FuncLivenessAnalysis(int start, int end)
                     kill[i].push_back(dst);
                 }
             }
-            std::vector<Location*> gen;
             Location *acc = ins->GetAccess1();
             if (acc != NULL) {
                 gen.push_back(acc);
@@ -246,7 +246,9 @@ void CodeGenerator::RegisterAlloc(InterferenceGraph *graph, int start,
         if (!tmp_reg.empty()) {
             // pick a free reg from regs left
             node->SetRegister(static_cast<Mips::Register>(*tmp_reg.begin()));
-        } //else spilled
+        } else {
+            node->SetRegister(Mips::zero);
+        }
         remove_list.erase(it);
     }
 }
