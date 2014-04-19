@@ -167,7 +167,6 @@ CodeGenerator::InterferenceGraph *CodeGenerator::BuildGraph(int start,
         size_t len = inter_set.size();
         for (size_t j = 0; j < len; j++) {
             for (size_t k = 0; k < len; k++) {
-                if (j == k) continue;
                 auto it = graph->find(inter_set[j]);
                 if (it == graph->end()) {
                     std::list<Location*> neigh = {inter_set[k]};
@@ -199,10 +198,8 @@ void CodeGenerator::RegisterAlloc(InterferenceGraph *graph, int start,
         int max_edge = 0;
         for (auto it = graph->begin(); it != graph->end(); it++) {
             int effective_size = 0; // number of edges not removed
-            auto edges = it->second;
-            for (auto it_lst = edges.begin(); it_lst != edges.end();
-                 it_lst++) {
-                if (remove_list.find(*it_lst) == remove_list.end()) {
+            for (auto it_lst: it->second) {
+                if (remove_list.find(it_lst) == remove_list.end()) {
                     effective_size++;
                 }
             }
