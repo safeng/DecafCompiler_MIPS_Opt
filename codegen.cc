@@ -21,7 +21,7 @@ void CodeGenerator::MarkSuccessor()
     delete[] succ;
     succ = new std::unordered_set<int>[len];
 
-    for (int i = 0; i < code->NumElements() - 1; i++) {
+    for (int i = 0; i < len - 1; i++) {
         Instruction *line = code->Nth(i);
         if (insideFn != NULL) {
             if (line->IsEndFunc()) {
@@ -43,6 +43,7 @@ void CodeGenerator::MarkSuccessor()
             succ[i].insert(i + 1);
         }
     }
+    insideFn = NULL;
 }
 
 // assume that set1 and set2 are sorted
@@ -150,6 +151,7 @@ void CodeGenerator::LivenessAnalysis()
             start = i;
         }
     }
+    insideFn = NULL;
 }
 
 /* Return constructed graph for the function */
@@ -171,11 +173,11 @@ CodeGenerator::InterferenceGraph *CodeGenerator::BuildGraph(int start,
                     std::list<Location*> neigh = {inter_set[k]};
                     graph->insert(std::make_pair(inter_set[j], neigh));
                 } else {
-                    auto edges = it->second;
-                    auto dup = std::find(edges.begin(), edges.end(),
+                    auto dup = std::find(it->second.begin(),
+                                         it->second.end(),
                                          inter_set[k]);
-                    if (dup == edges.end()) {
-                        edges.push_back(inter_set[k]);
+                    if (dup == it->second.end()) {
+                        it->second.push_back(inter_set[k]);
                     }
                 }
             }
@@ -198,8 +200,9 @@ void CodeGenerator::RegisterAlloc(InterferenceGraph *graph, int start,
         for (auto it = graph->begin(); it != graph->end(); it++) {
             int effective_size = 0; // number of edges not removed
             auto edges = it->second;
-            for (auto it_lst: edges) {
-                if (remove_list.find(it_lst) == remove_list.end()) {
+            for (auto it_lst = edges.begin(); it_lst != edges.end();
+                 it_lst++) {
+                if (remove_list.find(*it_lst) == remove_list.end()) {
                     effective_size++;
                 }
             }
@@ -220,7 +223,7 @@ void CodeGenerator::RegisterAlloc(InterferenceGraph *graph, int start,
 
     // Reconstruct the graph.
     std::unordered_set<int> gen_reg_set;
-    for(int i = OFFSET; i < k; i++) {
+    for(int i = OFFSET; i < OFFSET + k; i++) {
         gen_reg_set.insert(i);
     }
     while (!node_stk.empty()) {
@@ -267,6 +270,7 @@ void CodeGenerator::GraphColoring()
             start = i;
         }
     }
+    insideFn = NULL;
 }
 
 void CodeGenerator::PopulateRegMap()

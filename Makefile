@@ -15,7 +15,7 @@ LD_RUN_PATH := /usr/um/gcc-4.7.0/lib64
 COMPILER = dcc
 PRODUCTS = $(COMPILER) 
 default: $(PRODUCTS)
-	paxctl-ng -m $(COMPILER) || true
+	paxctl-ng -emprs $(COMPILER) || true
 
 # Set up the list of source and object files
 SRCS = ast.cc ast_decl.cc ast_expr.cc ast_stmt.cc ast_type.cc scope.cc \
@@ -37,7 +37,7 @@ YACC = bison
 # We want debugging and most warnings, but lex/yacc generate some
 # static symbols we don't use, so turn off unused warnings to avoid clutter
 # Also STL has some signed/unsigned comparisons we want to suppress
-CFLAGS = -g -Wall -Wno-unused -Wno-sign-compare -std=c++11
+CFLAGS = -ggdb -Wall -Wno-unused -Wno-sign-compare -std=c++11
 
 # The -d flag tells lex to set up for debugging. Can turn on/off by
 # setting value of global yy_flex_debug inside the scanner itself

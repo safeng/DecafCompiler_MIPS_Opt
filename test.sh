@@ -3,6 +3,7 @@
 ##** test.sh - A simple test framework ********************************
 
 cd $(git rev-parse --show-toplevel)
+rm samples/*.s samples/*.test samples/*.out
 make clean
 if make
 then
@@ -15,10 +16,10 @@ then
         then
             if [ -e ${BASE}.in ];
             then
-                spim -file ${BASE}.test.s < ${BASE}.in > ${BASE}.test
+                timeout 0.5 spim -file ${BASE}.test.s < ${BASE}.in > ${BASE}.test 2> /dev/null
                 spim -file ${BASE}.s < ${BASE}.in > ${BASE}.out
             else
-                spim -file ${BASE}.test.s > ${BASE}.test
+                timeout 0.5 spim -file ${BASE}.test.s > ${BASE}.test 2> /dev/null
                 spim -file ${BASE}.s > ${BASE}.out
             fi
         else
@@ -39,7 +40,6 @@ then
             diff -urw ${BASE}.test ${BASE}.out
         fi
     done
-    rm samples/*.s samples/*.test samples/*.out
 else
     echo -e "\e[31mBuild failed\e[0m"
 fi
